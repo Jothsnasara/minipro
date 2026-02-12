@@ -1,0 +1,118 @@
+.user-management h2 {
+  margin-bottom: 5px;
+  color: #111827;
+}
+
+.user-management p {
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  padding: 15px;
+  width: 150px;
+  border-radius: 10px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.stat-title {
+  font-size: 14px;
+}
+
+.stat-value {
+  font-size: 20px;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+/* Search + Add Button */
+.search-add {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.search-input {
+  padding: 8px 12px;
+  width: 300px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+.add-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.add-btn:hover {
+  background-color: #2563eb;
+}
+
+/* Table */
+.table-container {
+  overflow-x: auto;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.user-table th, .user-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.user-table th {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.user-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Action Buttons */
+.edit-btn {
+  background-color: #fbbf24;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background-color: #f59e0b;
+}
+
+.delete-btn {
+  background-color: #ef4444;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #dc2626;
+}
