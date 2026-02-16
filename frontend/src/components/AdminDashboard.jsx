@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { 
-  Box, Typography, Card, CardContent, Button, Divider, LinearProgress 
+import {
+  Box, Typography, Card, CardContent, Button, Divider, LinearProgress
 } from "@mui/material";
 import { People, Folder, BarChart } from "@mui/icons-material";
 
@@ -24,12 +24,12 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const usersRes = await axios.get("http://localhost:5000/users"); // Replace with your endpoint
-      //const projectsRes = await axios.get("http://localhost:5000/projects"); // Replace with your endpoint
-      //const activitiesRes = await axios.get("http://localhost:5000/activities"); // Replace with your endpoint
+      const usersRes = await axios.get("http://localhost:5001/users");
+      const projectsRes = await axios.get("http://localhost:5001/projects");
+      //const activitiesRes = await axios.get("http://localhost:5001/activities"); 
 
       setUsers(usersRes.data);
-      //setProjects(projectsRes.data);
+      setProjects(projectsRes.data);
       //setActivities(activitiesRes.data);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
@@ -37,16 +37,19 @@ export default function AdminDashboard() {
   };
 
   // Derived stats
- // Derived stats
-const totalUsers = users.filter(u => u.status === "Active" || u.status === "Inactive").length;
-const activeUsers = users.filter(u => u.status === "Active").length;
-const admins = users.filter(u => u.role === "admin").length;
-const managers = users.filter(u => u.role === "manager").length;
+  // Derived stats
+  const totalUsers = users.filter(u => u.status === "Active" || u.status === "Inactive").length;
+  const activeUsers = users.filter(u => u.status === "Active").length;
+  const admins = users.filter(u => u.role === "admin").length;
+  const managers = users.filter(u => u.role === "manager").length;
 
 
 
-  const activeProjects = projects.filter(p => p.status === "Ongoing").length;
-  const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+  // Matches statuses from Projects.jsx
+  const activeProjects = projects.filter(p => ['Planning', 'In Progress', 'On Track', 'At Risk', 'Delayed'].includes(p.status)).length;
+
+  const totalBudget = projects.reduce((sum, p) => sum + Number(p.budget || 0), 0);
+
   const completionRate = projects.length
     ? Math.round((projects.filter(p => p.status === "Completed").length / projects.length) * 100)
     : 0;
@@ -106,21 +109,27 @@ const managers = users.filter(u => u.role === "manager").length;
         {/* Quick Actions */}
         <Card sx={{ flex: 1, minWidth: 250, p: 2 }}>
           <Typography variant="h6" sx={{ color: "#000", mb: 2 }}>Quick Actions</Typography>
-<Button
-  fullWidth
-  sx={{
-    mb: 1,
-    backgroundColor: "#2563EB",
-    color: "#fff",
-    "&:hover": { backgroundColor: "#1D4ED8" }
-  }}
-  onClick={() => navigate("/admin/users")} // <-- correct nested route
->
-  Manage Users
-</Button>
+          <Button
+            fullWidth
+            sx={{
+              mb: 1,
+              backgroundColor: "#2563EB",
+              color: "#fff",
+              "&:hover": { backgroundColor: "#1D4ED8" }
+            }}
+            onClick={() => navigate("/admin/users")} // <-- correct nested route
+          >
+            Manage Users
+          </Button>
 
 
-          <Button fullWidth sx={{ mb: 1, backgroundColor: "#16A34A", color: "#fff", "&:hover": { backgroundColor: "#15803D" } }}>View Projects</Button>
+          <Button
+            fullWidth
+            sx={{ mb: 1, backgroundColor: "#16A34A", color: "#fff", "&:hover": { backgroundColor: "#15803D" } }}
+            onClick={() => navigate("/admin/projects")}
+          >
+            View Projects
+          </Button>
           <Button fullWidth sx={{ mb: 1, backgroundColor: "#8B5CF6", color: "#fff", "&:hover": { backgroundColor: "#7C3AED" } }}>Analytics</Button>
         </Card>
 
@@ -148,10 +157,10 @@ const managers = users.filter(u => u.role === "manager").length;
           <Typography variant="body2" sx={{ color: "#000" }}>Team Members Active</Typography>
           <LinearProgress variant="determinate" value={totalUsers ? (activeMembers / totalUsers) * 100 : 0} sx={{ mb: 2, height: 10, borderRadius: 2 }} />
           <Typography variant="body2" sx={{ color: "#000" }}>Resources Allocated</Typography>
-          <LinearProgress 
-            variant="determinate" 
-            value={projects.length ? (activeProjects / projects.length) * 100 : 0} 
-            sx={{ mb: 2, height: 10, borderRadius: 2, bgcolor: "#E5E7EB", "& .MuiLinearProgress-bar": { backgroundColor: "#2563EB" } }} 
+          <LinearProgress
+            variant="determinate"
+            value={projects.length ? (activeProjects / projects.length) * 100 : 0}
+            sx={{ mb: 2, height: 10, borderRadius: 2, bgcolor: "#E5E7EB", "& .MuiLinearProgress-bar": { backgroundColor: "#2563EB" } }}
           />
         </Card>
       </Box>

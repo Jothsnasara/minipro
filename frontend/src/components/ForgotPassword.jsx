@@ -19,7 +19,7 @@ function ForgotPassword() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/forgot-password", {
+      const res = await axios.post("http://localhost:5001/forgot-password", {
         email
       });
 
@@ -85,7 +85,7 @@ function ForgotPassword() {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/forgot-password",
+        "http://localhost:5001/forgot-password",
         { email }
       );
 

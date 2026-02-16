@@ -23,7 +23,7 @@ function ResetPassword() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/reset-password", {
+      const res = await axios.post("http://localhost:5001/reset-password", {
         username,
         otp,
         newPassword: password
@@ -99,7 +99,7 @@ function ResetPassword() {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/reset-password",
+        "http://localhost:5001/reset-password",
         { email, otp, newPassword }
       );
 

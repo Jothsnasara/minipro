@@ -14,59 +14,59 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-const handleLogin = async () => {
-  setError("");
+  const handleLogin = async () => {
+    setError("");
 
-  if (!username || !password) {
-    setError("Please enter both username and password");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await axios.post("http://localhost:5000/login", {
-      username,
-      password
-    });
-
-    const user = res.data.user;
-
-    // Save logged-in user
-    localStorage.setItem("user", JSON.stringify(user));
-
-    // 🔒 INACTIVE USER HANDLING
-    if (user.status === "Inactive") {
-      navigate("/inactive-user");
+    if (!username || !password) {
+      setError("Please enter both username and password");
       return;
     }
 
-    // 🔐 Role-based redirect (ACTIVE users only)
-    if (user.role === "admin") navigate("/admin");
-    //else if (user.role === "manager") navigate("/manager");
-    //else navigate("/member");
+    try {
+      setLoading(true);
 
-  } catch (err) {
-    const msg = err.response?.data?.message;
+      const res = await axios.post("http://localhost:5001/login", {
+        username,
+        password
+      });
 
-    if (msg === "Please verify your account with OTP first") {
-      navigate("/verify-otp", { state: { username } });
-      return;
+      const user = res.data.user;
+
+      // Save logged-in user
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // 🔒 INACTIVE USER HANDLING
+      if (user.status === "Inactive") {
+        navigate("/inactive-user");
+        return;
+      }
+
+      // 🔐 Role-based redirect (ACTIVE users only)
+      if (user.role === "admin") navigate("/admin");
+      else if (user.role === "manager") navigate("/manager");
+      else navigate("/member");
+
+    } catch (err) {
+      const msg = err.response?.data?.message;
+
+      if (msg === "Please verify your account with OTP first") {
+        navigate("/verify-otp", { state: { username } });
+        return;
+      }
+
+      setError(msg || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setError(msg || "Login failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   return (
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-  <img src={logo} alt="ProjectPulse logo" />
-</div>
+          <img src={logo} alt="ProjectPulse logo" />
+        </div>
 
 
         <h2 className="auth-title">ProjectPulse</h2>
@@ -103,16 +103,16 @@ const handleLogin = async () => {
           {loading ? "Signing in..." : "Sign In"}
         </button>
 
-        
+
         <p className="auth-footer">
-  <Link className="auth-link" to="/forgot-password">
-    Forgot password?
-  </Link>
-</p>
+          <Link className="auth-link" to="/forgot-password">
+            Forgot password?
+          </Link>
+        </p>
 
 
 
-        
+
       </div>
     </div>
   );

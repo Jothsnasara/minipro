@@ -9,6 +9,7 @@ import ResetPassword from "./components/ResetPassword";
 import Admin from "./components/Admin";
 import AdminDashboard from "./components/AdminDashboard";
 import UserManagement from "./components/UserManagement";
+import Projects from "./components/Projects";
 
 import Manager from "./components/Manager";
 import Member from "./components/Member";
@@ -36,7 +37,8 @@ function App() {
       >
         <Route index element={<AdminDashboard />} /> {/* Default /admin */}
         <Route path="users" element={<UserManagement />} /> {/* /admin/users */}
-        
+        <Route path="projects" element={<Projects />} /> {/* /admin/projects */}
+
       </Route>
 
       {/* Manager routes */}

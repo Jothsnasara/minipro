@@ -40,7 +40,7 @@ function VerifyOtp() {
       setLoading(true);
       setMessage("");
 
-      await axios.post("http://localhost:5000/verify-otp", {
+      await axios.post("http://localhost:5001/verify-otp", {
         username,
         otp
       });
@@ -61,7 +61,7 @@ function VerifyOtp() {
       setLoading(true);
       setMessage("");
 
-      await axios.post("http://localhost:5000/resend-otp", { username });
+      await axios.post("http://localhost:5001/resend-otp", { username });
 
       setMessage("New OTP sent to your email");
       setCooldown(30); // ⏳ restart cooldown

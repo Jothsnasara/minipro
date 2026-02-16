@@ -48,7 +48,7 @@ function Register() {
       if (editUser) {
         // UPDATE USER
         await axios.put(
-          `http://localhost:5000/users/${editUser.id}`,
+          `http://localhost:5001/users/${editUser.id}`,
           { name, email, username, role }
         );
         setSuccess("User updated successfully!");
@@ -59,7 +59,7 @@ function Register() {
           return;
         }
 
-        await axios.post("http://localhost:5000/register", {
+        await axios.post("http://localhost:5001/register", {
           name,
           email,
           username,
