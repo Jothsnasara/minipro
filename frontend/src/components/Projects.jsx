@@ -18,12 +18,7 @@ const Projects = () => {
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({
         project_name: '',
-        description: '',
-        budget: '',
-        start_date: '',
-        end_date: '',
-        manager_id: '',
-        status: 'Planning'
+        manager_id: ''
     });
 
     const summaryCards = [
@@ -74,12 +69,7 @@ const Projects = () => {
         setOpen(false);
         setFormData({
             project_name: '',
-            description: '',
-            budget: '',
-            start_date: '',
-            end_date: '',
-            manager_id: '',
-            status: 'Planning'
+            manager_id: ''
         });
     };
 
@@ -92,11 +82,11 @@ const Projects = () => {
 
     const handleSubmit = async () => {
         try {
-            const payload = {
-                ...formData,
-                manager_id: formData.manager_id || null // Convert empty string to null
-            };
-            await axios.post('http://localhost:5001/projects', payload);
+            if (!formData.project_name || !formData.manager_id) {
+                alert("Please fill all required fields");
+                return;
+            }
+            await axios.post('http://localhost:5001/projects', formData);
             fetchData(); // Refresh list
             handleClose();
         } catch (error) {
@@ -142,7 +132,7 @@ const Projects = () => {
                         onClick={handleOpen}
                         sx={{ bgcolor: '#2563EB', textTransform: 'none' }}
                     >
-                        Create Project
+                        Assign Project
                     </Button>
                 </Box>
             </Box>
@@ -301,42 +291,19 @@ const Projects = () => {
                 })}
             </Grid>
 
-            {/* Create Project Dialog */}
+            {/* Assign Project Dialog */}
             <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-                <DialogTitle>Create New Project</DialogTitle>
+                <DialogTitle>Assign Project</DialogTitle>
                 <DialogContent>
                     <Box component="form" sx={{ mt: 1 }}>
                         <TextField
                             fullWidth margin="normal" label="Project Name" name="project_name"
                             value={formData.project_name} onChange={handleChange} required
                         />
+
                         <TextField
-                            fullWidth margin="normal" label="Description" name="description"
-                            value={formData.description} onChange={handleChange} multiline rows={3}
-                        />
-                        <TextField
-                            fullWidth margin="normal" label="Budget" name="budget" type="number"
-                            value={formData.budget} onChange={handleChange}
-                        />
-                        <Grid container spacing={2}>
-                            <Grid item xs={6}>
-                                <TextField
-                                    fullWidth margin="normal" label="Start Date" name="start_date" type="date"
-                                    InputLabelProps={{ shrink: true }}
-                                    value={formData.start_date} onChange={handleChange}
-                                />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <TextField
-                                    fullWidth margin="normal" label="End Date" name="end_date" type="date"
-                                    InputLabelProps={{ shrink: true }}
-                                    value={formData.end_date} onChange={handleChange}
-                                />
-                            </Grid>
-                        </Grid>
-                        <TextField
-                            fullWidth margin="normal" label="Manager" name="manager_id" select
-                            value={formData.manager_id} onChange={handleChange}
+                            fullWidth margin="normal" label="Assign Manager" name="manager_id" select
+                            value={formData.manager_id} onChange={handleChange} required
                         >
                             {managers.length > 0 ? (
                                 managers.map((user) => (
@@ -350,22 +317,11 @@ const Projects = () => {
                                 </MenuItem>
                             )}
                         </TextField>
-                        <TextField
-                            fullWidth margin="normal" label="Status" name="status" select
-                            value={formData.status} onChange={handleChange}
-                        >
-                            <MenuItem value="Planning">Planning</MenuItem>
-                            <MenuItem value="In Progress">In Progress</MenuItem>
-                            <MenuItem value="On Track">On Track</MenuItem>
-                            <MenuItem value="At Risk">At Risk</MenuItem>
-                            <MenuItem value="Delayed">Delayed</MenuItem>
-                            <MenuItem value="Completed">Completed</MenuItem>
-                        </TextField>
                     </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose} color="inherit">Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: '#2563EB' }}>Save Project</Button>
+                    <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: '#2563EB' }}>Assign</Button>
                 </DialogActions>
             </Dialog>
         </Box>
