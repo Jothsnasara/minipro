@@ -153,15 +153,24 @@ export default function AdminDashboard() {
       {/* Active Resources */}
       <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
         <Card sx={{ flex: 1, minWidth: 300, p: 2 }}>
-          <Typography variant="h6" sx={{ color: "#000", mb: 2 }}>Active Resources</Typography>
-          <Typography variant="body2" sx={{ color: "#000" }}>Team Members Active</Typography>
-          <LinearProgress variant="determinate" value={totalUsers ? (activeMembers / totalUsers) * 100 : 0} sx={{ mb: 2, height: 10, borderRadius: 2 }} />
-          <Typography variant="body2" sx={{ color: "#000" }}>Resources Allocated</Typography>
-          <LinearProgress
-            variant="determinate"
-            value={projects.length ? (activeProjects / projects.length) * 100 : 0}
-            sx={{ mb: 2, height: 10, borderRadius: 2, bgcolor: "#E5E7EB", "& .MuiLinearProgress-bar": { backgroundColor: "#2563EB" } }}
-          />
+          <Typography variant="h6" sx={{ color: "#000", mb: 2 }}>Resource Overview</Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {users.filter(u => u.role === 'member').map(member => {
+              // Find projects this member is assigned to (mocking for overview if tasks not joined)
+              // In a real scenario, we'd fetch assignments. For now, we'll list the member.
+              return (
+                <Box key={member.id} sx={{ p: 1.5, border: '1px solid #E5E7EB', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" fontWeight="bold">{member.name}</Typography>
+                  <Typography variant="caption" sx={{ color: 'gray' }}>
+                    Specialization: {member.specialization || 'Generalist'} | Status: {member.status}
+                  </Typography>
+                </Box>
+              );
+            })}
+            {users.filter(u => u.role === 'member').length === 0 && (
+              <Typography variant="body2" color="gray">No members registered.</Typography>
+            )}
+          </Box>
         </Card>
       </Box>
 

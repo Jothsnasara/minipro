@@ -12,9 +12,13 @@ import UserManagement from "./components/UserManagement";
 import Projects from "./components/Projects";
 
 import Manager from "./components/Manager";
+import ManagerDashboard from "./components/ManagerDashboard";
+import ManagerProjects from "./components/ManagerProjects";
+import ProjectForm from "./components/ProjectForm";
+import ManagerLayout from "./components/ManagerLayout";
 import Member from "./components/Member";
-import ProtectedRoute from "./components/Protectedroute";
-import ForgotPassword from "./components/Forgotpassword";
+import ProtectedRoute from "./components/ProtectedRoute";
+import ForgotPassword from "./components/ForgotPassword";
 
 function App() {
   return (
@@ -42,14 +46,20 @@ function App() {
       </Route>
 
       {/* Manager routes */}
+      {/* Manager routes */}
       <Route
-        path="/manager"
         element={
           <ProtectedRoute allowedRole="manager">
-            <Manager />
+            <ManagerLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route path="/manager" element={<ManagerDashboard />} /> {/* Legacy/Fallback */}
+        <Route path="/manager-dashboard" element={<ManagerDashboard />} />
+        <Route path="/manager/projects" element={<ManagerProjects />} />
+        <Route path="/manager/create-project" element={<ProjectForm />} />
+        <Route path="/manager/activate-project" element={<ProjectForm />} />
+      </Route>
 
       {/* Member routes */}
       <Route

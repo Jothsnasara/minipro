@@ -72,10 +72,12 @@ const {
   register,
   login,
   getAllUsers,
+  getManagers,
   forgotPassword,
   resetPassword,
   resignUser,
-  updateUser
+  updateUser,
+  getMembers
 } = require("../controllers/authController");
 
 
@@ -85,6 +87,8 @@ router.post("/register", register);
 router.post("/login", login);
 
 /* ===== Users ===== */
+router.get("/users/managers", getManagers);
+router.get("/users/members", getMembers);
 router.get("/users", getAllUsers);
 
 router.put("/users/:id/resign", resignUser);

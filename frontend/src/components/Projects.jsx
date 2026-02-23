@@ -7,11 +7,13 @@ import { Add, ArrowBack, Folder, CheckCircle, AttachMoney, Groups } from '@mui/i
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import '../styles/ManagerDashboard.css';
 
 const Projects = () => {
     const navigate = useNavigate();
     const [projects, setProjects] = useState([]);
-    const [users, setUsers] = useState([]);
+    const [users, setUsers] = useState([]); // Still need for Team Members count
+    const [managers, setManagers] = useState([]); // Dedicated state for managers
     const [loading, setLoading] = useState(true);
 
     // Modal State
@@ -32,7 +34,20 @@ const Projects = () => {
 
     useEffect(() => {
         fetchData();
+        fetchManagers();
     }, []);
+
+    const fetchManagers = async () => {
+        try {
+            // Updated to use the specific endpoint as requested
+            const res = await axios.get('http://localhost:5001/users/managers');
+            setManagers(res.data);
+            console.log("Fetched Managers:", res.data);
+        } catch (err) {
+            console.error("Failed to fetch managers:", err);
+            // Fallback or alert if needed
+        }
+    }
 
     const fetchData = async () => {
         setLoading(true);
@@ -47,11 +62,10 @@ const Projects = () => {
                 setFetchError(prev => (prev ? prev + " | " : "") + "Projects: " + (err.message || "Unknown error"));
             }
 
-            // Fetch Users
+            // Fetch Users (for summary)
             try {
                 const usersRes = await axios.get('http://localhost:5001/users');
                 setUsers(usersRes.data);
-                console.log("Fetched Users:", usersRes.data);
             } catch (err) {
                 console.error("Failed to fetch users:", err);
                 setFetchError(prev => (prev ? prev + " | " : "") + "Users: " + (err.message || "Unknown error"));
@@ -77,8 +91,8 @@ const Projects = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Filter only managers (case-insensitive)
-    const managers = users.filter(user => (user.role || '').toLowerCase() === 'manager');
+    // Removed client-side filtering since we now have server-side fetching
+    // const managers = users.filter(user => (user.role || '').toLowerCase() === 'manager');
 
     const handleSubmit = async () => {
         try {
@@ -95,25 +109,25 @@ const Projects = () => {
         }
     };
 
-    const getStatusChipProps = (status) => {
+    const getStatusClass = (status) => {
         switch (status) {
-            case 'In Progress': return { color: 'success', bgcolor: '#dcfce7', labelColor: '#166534' };
-            case 'On Track': return { color: 'success', bgcolor: '#dcfce7', labelColor: '#166534' };
-            case 'At Risk': return { color: 'warning', bgcolor: '#fef3c7', labelColor: '#92400e' };
-            case 'Delayed': return { color: 'error', bgcolor: '#fee2e2', labelColor: '#991b1b' };
-            case 'Planning': return { color: 'info', bgcolor: '#e0f2fe', labelColor: '#075985' };
-            default: return { color: 'default', bgcolor: '#f3f4f6', labelColor: '#374151' };
+            case 'In Progress': return 'ongoing';
+            case 'On Track': return 'ongoing';
+            case 'At Risk': return 'at-risk';
+            case 'Delayed': return 'at-risk';
+            case 'Completed': return 'done';
+            default: return 'done'; // Planning etc
         }
-    }
+    };
 
     // Helper to format currency
     const formatCurrency = (amount) => {
         return amount ? `₹${(Number(amount) / 1000).toFixed(0)}K` : '₹0K';
-    }
+    };
 
     return (
-        <Box>
-            <Box sx={{ mb: 4 }}>
+        <div className="main-content" style={{ marginLeft: 0, padding: '40px' }}> {/* Override marginLeft since no sidebar here */}
+            <div className="page-header-block">
                 <Button
                     startIcon={<ArrowBack />}
                     onClick={() => navigate('/admin')}
@@ -121,177 +135,86 @@ const Projects = () => {
                 >
                     Back to Dashboard
                 </Button>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                    <Box>
-                        <Typography variant="h5" fontWeight="bold" sx={{ color: '#111827' }}>Project Management</Typography>
-                        <Typography variant="body2" sx={{ color: '#6b7280' }}>Monitor and manage all projects</Typography>
-                    </Box>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={handleOpen}
-                        sx={{ bgcolor: '#2563EB', textTransform: 'none' }}
-                    >
-                        Assign Project
-                    </Button>
-                </Box>
-            </Box>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h1>Project Management</h1>
+                        <p className="sub-text">Monitor and manage all projects</p>
+                    </div>
+                    <button className="btn-create-large" onClick={handleOpen}>
+                        + Assign Project
+                    </button>
+                </div>
+            </div>
 
             {/* Summary Cards */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+            <div className="kpi-grid">
                 {summaryCards.map((card, index) => (
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card sx={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', borderRadius: 2 }}>
-                            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, p: '24px !important' }}>
-                                <Box sx={{
-                                    p: 1.5,
-                                    borderRadius: 2,
-                                    bgcolor: card.bgColor,
-                                    color: card.color,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    {card.icon}
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: '#6b7280' }}>{card.title}</Typography>
-                                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#111827' }}>{card.value}</Typography>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
+                    <div className={`kpi-card ${index === 0 ? 'blue' : index === 1 ? 'green' : index === 2 ? 'orange' : 'purple'}`} key={index}>
+                        <div className="icon">{card.icon}</div>
+                        <h3>{card.value}</h3>
+                        <p>{card.title}</p>
+                    </div>
                 ))}
-            </Grid>
-
-            {/* DEBUG SECTION - REMOVE AFTER FIXING */}
-            {/* 
-            <Box sx={{ mt: 4, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
-                <Typography variant="h6">Debug: Raw Users Data</Typography>
-                <pre style={{ overflow: 'auto', maxHeight: '200px' }}>
-                    {JSON.stringify(users, null, 2)}
-                </pre>
-            </Box> 
-            */}
+            </div>
 
             {/* Projects Grid */}
-            <Grid container spacing={3}>
+            <div className="detailed-grid">
                 {projects.map((project, index) => {
-                    const statusProps = getStatusChipProps(project.status);
-                    // Mock data for missing fields if any
                     const progress = Math.floor(Math.random() * 100);
-                    const budgetUsage = Math.floor(Math.random() * 100);
-                    // For members count, we can just show a random number or fetched if we had project_members table
+                    // const budgetUsage = Math.floor(Math.random() * 100);
                     const members = Math.floor(Math.random() * 15) + 5;
-                    const barColor = project.status === 'At Risk' ? '#f59e0b' : (project.status === 'Delayed' ? '#ef4444' : '#10b981');
+                    const statusClass = getStatusClass(project.status);
 
                     return (
-                        <Grid item xs={12} lg={6} key={index}>
-                            <Card sx={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', borderRadius: 2, height: '100%' }}>
-                                <CardContent sx={{ p: 3 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                                        <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem', color: '#111827' }}>{project.project_name}</Typography>
-                                        <Chip
-                                            label={project.status}
-                                            size="small"
-                                            sx={{
-                                                bgcolor: statusProps.bgcolor,
-                                                color: statusProps.labelColor,
-                                                fontWeight: 500,
-                                                borderRadius: '6px'
-                                            }}
-                                        />
-                                    </Box>
-                                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 3 }}>
-                                        {project.description}
-                                    </Typography>
+                        <div className="figma-detailed-card" key={index}>
+                            <div className="card-top-row">
+                                <h4>{project.project_name}</h4>
+                                <span className={`status-pill ${statusClass}`}>{project.status}</span>
+                            </div>
 
-                                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                                        <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '1rem' }}>📅</Typography>
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{dayjs(project.end_date).format('DD/MM/YYYY')}</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Groups sx={{ color: '#9ca3af', fontSize: '1rem' }} />
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{members} members</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '1rem' }}>💲</Typography>
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{formatCurrency(project.budget)}</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="caption" sx={{ color: '#9ca3af' }}>PM:</Typography>
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{project.manager_name || 'Unassigned'}</Typography>
-                                            </Box>
-                                        </Grid>
-                                    </Grid>
+                            <p className="card-summary">
+                                {project.description || "No description provided."}
+                            </p>
 
-                                    <Box sx={{ mb: 3 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                            <Typography variant="caption" sx={{ color: '#374151' }}>Progress</Typography>
-                                            <Typography variant="caption" fontWeight="bold" sx={{ color: '#374151' }}>{progress}%</Typography>
-                                        </Box>
-                                        <LinearProgress
-                                            variant="determinate"
-                                            value={progress}
-                                            sx={{
-                                                height: 8,
-                                                borderRadius: 4,
-                                                bgcolor: '#e5e7eb',
-                                                '& .MuiLinearProgress-bar': { bgcolor: barColor }
-                                            }}
-                                        />
-                                    </Box>
+                            <div className="card-meta-info">
+                                <div className="meta-item">
+                                    <span>📅</span> {dayjs(project.end_date).format('DD/MM/YYYY')}
+                                </div>
+                                <div className="meta-item">
+                                    <span>👥</span> {members} members
+                                </div>
+                                <div className="meta-item">
+                                    <span>💲</span> {formatCurrency(project.budget)}
+                                </div>
+                                <div className="meta-item">
+                                    <span>PM:</span> {project.manager_name || 'Unassigned'}
+                                </div>
+                            </div>
 
-                                    <Box sx={{ display: 'flex', gap: 2 }}>
-                                        <Button
-                                            variant="contained"
-                                            fullWidth
-                                            sx={{
-                                                bgcolor: '#2563EB',
-                                                textTransform: 'none',
-                                                borderRadius: 2,
-                                                boxShadow: 'none',
-                                                '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' }
-                                            }}
-                                        >
-                                            Tasks & Resources
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            fullWidth
-                                            sx={{
-                                                bgcolor: '#9333EA',
-                                                textTransform: 'none',
-                                                borderRadius: 2,
-                                                boxShadow: 'none',
-                                                '&:hover': { bgcolor: '#7e22ce', boxShadow: 'none' }
-                                            }}
-                                        >
-                                            Cost Tracking
-                                        </Button>
-                                    </Box>
+                            <div className="card-progress">
+                                <div className="progress-labels">
+                                    <span>Progress</span>
+                                    <span>{progress}%</span>
+                                </div>
+                                <div className="bar-bg">
+                                    <div className="bar-fill" style={{ width: `${progress}%` }}></div>
+                                </div>
+                            </div>
 
-                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Typography variant="caption" sx={{ color: '#6b7280' }}>Budget Usage</Typography>
-                                        <Typography variant="caption" fontWeight="bold" sx={{ color: '#111827' }}>{budgetUsage}%</Typography>
-                                    </Box>
-
-                                </CardContent>
-                            </Card>
-                        </Grid>
+                            <div className="card-action-btns">
+                                <button className="btn-action tasks">
+                                    <span>👁</span> Tasks & Resources
+                                </button>
+                                <button className="btn-action cost">
+                                    <span>💲</span> Cost Tracking
+                                </button>
+                            </div>
+                        </div>
                     );
                 })}
-            </Grid>
+            </div>
 
-            {/* Assign Project Dialog */}
+            {/* Assign Project Dialog - Keeping MUI for Modal as it's functional */}
             <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
                 <DialogTitle>Assign Project</DialogTitle>
                 <DialogContent>
@@ -324,7 +247,7 @@ const Projects = () => {
                     <Button onClick={handleSubmit} variant="contained" sx={{ bgcolor: '#2563EB' }}>Assign</Button>
                 </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 
