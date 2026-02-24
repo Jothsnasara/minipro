@@ -78,14 +78,14 @@ export default function UserManagement() {
   );
 
   return (
-    <Box>
+    <Box sx={{ p: 2, bgcolor: "#fff" }}>
 
-      <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ mb: 6, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 600, mb: 1, color: "#000" }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, color: "#334155", letterSpacing: "-0.04em" }}>
             User Management
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body1" sx={{ color: "#64748b", fontWeight: 600 }}>
             Manage system users and their roles
           </Typography>
         </Box>
@@ -95,6 +95,11 @@ export default function UserManagement() {
           startIcon={<People />}
           sx={{
             backgroundColor: "#2563EB",
+            px: 4,
+            py: 1.5,
+            borderRadius: 3,
+            fontWeight: 700,
+            textTransform: "none",
             "&:hover": { backgroundColor: "#1D4ED8" },
           }}
           onClick={() => navigate("/register")}
@@ -103,40 +108,49 @@ export default function UserManagement() {
         </Button>
       </Box>
 
-      <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", gap: 3, mb: 6, flexWrap: "wrap" }}>
         <StatCard
           icon={<Group sx={{ color: "#2563EB" }} />}
           label="Total Users"
-          value={users.filter(u => u.status === "Active" || u.status === "Inactive").length} // <-- only active/inactive
-          bg="#DDEAFE"
+          value={users.filter(u => u.status === "Active" || u.status === "Inactive").length}
+          bg="#eff6ff"
         />
 
         <StatCard
           icon={<CheckCircle sx={{ color: "#16A34A" }} />}
           label="Active Users"
           value={users.filter(u => u.status === "Active").length}
-          bg="#D1FAE5"
+          bg="#ecfdf5"
         />
 
         <StatCard
           icon={<AdminPanelSettings sx={{ color: "#8B5CF6" }} />}
           label="Admins"
           value={users.filter(u => u.role === "admin").length}
-          bg="#EDE9FE"
+          bg="#f5f3ff"
         />
         <StatCard
           icon={<People sx={{ color: "#F59E0B" }} />}
           label="Project Managers"
           value={users.filter(u => u.role === "manager").length}
-          bg="#FFEDD5"
+          bg="#fffbeb"
         />
       </Box>
 
       <TextField
         fullWidth
-        placeholder="🔎Search users by name or email..."
-        size="small"
-        sx={{ mb: 2, bgcolor: "#fff" }}
+        placeholder="Search users by name or email..."
+        size="medium"
+        sx={{
+          mb: 4,
+          bgcolor: "#fff",
+          "& .MuiOutlinedInput-root": {
+            borderRadius: 4,
+            bgcolor: "#f8faff",
+            border: "1px solid #eaecf0",
+            "& fieldset": { border: "none" }
+          }
+        }}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
@@ -237,11 +251,13 @@ export default function UserManagement() {
 
 
 const StatCard = ({ icon, label, value, bg }) => (
-  <Box sx={{ flex: 1, minWidth: 150, p: 2, bgcolor: bg, borderRadius: 2, display: "flex", gap: 1 }}>
-    {icon}
+  <Box sx={{ flex: 1, minWidth: 150, p: 2, bgcolor: bg, borderRadius: 3, display: "flex", gap: 1.5, alignItems: "center", border: "1px solid #f1f5f9" }}>
+    <Box sx={{ p: 1, bgcolor: "#fff", borderRadius: 2, display: "flex", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+      {icon}
+    </Box>
     <Box>
-      <Typography variant="caption" sx={{ color: "#000" }}>{label}</Typography>
-      <Typography variant="h6" sx={{ color: "#000" }}>{value}</Typography>
+      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.65rem" }}>{label}</Typography>
+      <Typography variant="h6" sx={{ color: "#334155", fontWeight: 800, lineHeight: 1.2 }}>{value}</Typography>
     </Box>
   </Box>
 );

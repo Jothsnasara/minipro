@@ -116,36 +116,53 @@ const Projects = () => {
             <Box sx={{ mb: 4 }}>
                 <Button
                     startIcon={<ArrowBack />}
-                    onClick={() => navigate('/admin')}
+                    onClick={() => {
+                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                        if (user.role === 'manager') navigate('/manager/dashboard');
+                        else navigate('/admin');
+                    }}
                     sx={{ mb: 2, textTransform: 'none', color: '#6b7280' }}
                 >
                     Back to Dashboard
                 </Button>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                     <Box>
-                        <Typography variant="h5" fontWeight="bold" sx={{ color: '#111827' }}>Project Management</Typography>
-                        <Typography variant="body2" sx={{ color: '#6b7280' }}>Monitor and manage all projects</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: '#334155', letterSpacing: '-0.04em' }}>Project Management</Typography>
+                        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>Monitor and manage all projects</Typography>
                     </Box>
                     <Button
                         variant="contained"
                         startIcon={<Add />}
                         onClick={handleOpen}
-                        sx={{ bgcolor: '#2563EB', textTransform: 'none' }}
+                        sx={{
+                            bgcolor: '#2563EB',
+                            textTransform: 'none',
+                            px: 4,
+                            py: 1.2,
+                            borderRadius: 3,
+                            fontWeight: 700,
+                            boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.2)',
+                            '&:hover': { bgcolor: '#1d4ed8' }
+                        }}
                     >
                         Assign Project
                     </Button>
                 </Box>
             </Box>
 
-            {/* Summary Cards */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid container spacing={4} sx={{ mb: 6 }}>
                 {summaryCards.map((card, index) => (
                     <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card sx={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', borderRadius: 2 }}>
-                            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, p: '24px !important' }}>
+                        <Card sx={{
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                            borderRadius: 4,
+                            border: '1px solid #f1f5f9',
+                            bgcolor: '#fff'
+                        }}>
+                            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2.5, p: '24px !important' }}>
                                 <Box sx={{
                                     p: 1.5,
-                                    borderRadius: 2,
+                                    borderRadius: 3,
                                     bgcolor: card.bgColor,
                                     color: card.color,
                                     display: 'flex',
@@ -155,8 +172,8 @@ const Projects = () => {
                                     {card.icon}
                                 </Box>
                                 <Box>
-                                    <Typography variant="body2" sx={{ color: '#6b7280' }}>{card.title}</Typography>
-                                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#111827' }}>{card.value}</Typography>
+                                    <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>{card.title}</Typography>
+                                    <Typography variant="h5" sx={{ color: '#334155', fontWeight: 800 }}>{card.value}</Typography>
                                 </Box>
                             </CardContent>
                         </Card>
@@ -174,8 +191,7 @@ const Projects = () => {
             </Box> 
             */}
 
-            {/* Projects Grid */}
-            <Grid container spacing={3}>
+            <Grid container spacing={4}>
                 {projects.map((project, index) => {
                     const statusProps = getStatusChipProps(project.status);
                     // Mock data for missing fields if any
@@ -187,48 +203,56 @@ const Projects = () => {
 
                     return (
                         <Grid item xs={12} lg={6} key={index}>
-                            <Card sx={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', borderRadius: 2, height: '100%' }}>
-                                <CardContent sx={{ p: 3 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                                        <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem', color: '#111827' }}>{project.project_name}</Typography>
+                            <Card sx={{
+                                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                                borderRadius: 4,
+                                height: '100%',
+                                border: '1px solid #eaecf0',
+                                bgcolor: '#fff'
+                            }}>
+                                <CardContent sx={{ p: 4 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                        <Typography variant="h6" sx={{ fontSize: '1.25rem', color: '#334155', fontWeight: 800, letterSpacing: '-0.02em' }}>{project.project_name}</Typography>
                                         <Chip
                                             label={project.status}
                                             size="small"
                                             sx={{
                                                 bgcolor: statusProps.bgcolor,
                                                 color: statusProps.labelColor,
-                                                fontWeight: 500,
-                                                borderRadius: '6px'
+                                                fontWeight: 800,
+                                                borderRadius: '8px',
+                                                textTransform: 'uppercase',
+                                                fontSize: '0.65rem'
                                             }}
                                         />
                                     </Box>
-                                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 3 }}>
+                                    <Typography variant="body2" sx={{ color: '#64748b', mb: 4, fontWeight: 500, lineHeight: 1.6 }}>
                                         {project.description}
                                     </Typography>
 
-                                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                                    <Grid container spacing={3} sx={{ mb: 4 }}>
                                         <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '1rem' }}>📅</Typography>
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{dayjs(project.end_date).format('DD/MM/YYYY')}</Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '1.1rem' }}>📅</Typography>
+                                                <Typography variant="caption" sx={{ color: '#475569', fontWeight: 700 }}>{dayjs(project.end_date).format('DD/MM/YYYY')}</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Groups sx={{ color: '#9ca3af', fontSize: '1rem' }} />
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{members} members</Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Groups sx={{ color: '#94a3b8', fontSize: '1.2rem' }} />
+                                                <Typography variant="caption" sx={{ color: '#475569', fontWeight: 700 }}>{members} members</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '1rem' }}>💲</Typography>
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{formatCurrency(project.budget)}</Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '1.1rem' }}>💲</Typography>
+                                                <Typography variant="caption" sx={{ color: '#475569', fontWeight: 700 }}>{formatCurrency(project.budget)}</Typography>
                                             </Box>
                                         </Grid>
                                         <Grid item xs={6}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="caption" sx={{ color: '#9ca3af' }}>PM:</Typography>
-                                                <Typography variant="caption" sx={{ color: '#374151' }}>{project.manager_name || 'Unassigned'}</Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800 }}>PM:</Typography>
+                                                <Typography variant="caption" sx={{ color: '#475569', fontWeight: 700 }}>{project.manager_name || 'Unassigned'}</Typography>
                                             </Box>
                                         </Grid>
                                     </Grid>
@@ -254,6 +278,11 @@ const Projects = () => {
                                         <Button
                                             variant="contained"
                                             fullWidth
+                                            onClick={() => {
+                                                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                                const prefix = user.role === 'manager' ? '/manager' : '/admin';
+                                                navigate(`${prefix}/projects/${project._id || project.id}/tasks`);
+                                            }}
                                             sx={{
                                                 bgcolor: '#2563EB',
                                                 textTransform: 'none',
@@ -267,6 +296,14 @@ const Projects = () => {
                                         <Button
                                             variant="contained"
                                             fullWidth
+                                            onClick={() => {
+                                                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                                const prefix = user.role === 'manager' ? '/manager' : '/admin';
+                                                const pid = project._id || project.id;
+                                                navigate(`${prefix}/projects/${pid}/tasks/cost-tracking`, {
+                                                    state: { project, from: `${prefix}/projects` }
+                                                });
+                                            }}
                                             sx={{
                                                 bgcolor: '#9333EA',
                                                 textTransform: 'none',

@@ -1,0 +1,63 @@
+# ===========================
+# Node modules (NEVER commit)
+# ===========================
+node_modules/
+**/node_modules/
+
+# ===========================
+# Build outputs
+# ===========================
+dist/
+build/
+.next/
+out/
+
+# ===========================
+# Environment & secrets
+# ===========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===========================
+# Logs
+# ===========================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# ===========================
+# OS files
+# ===========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===========================
+# Editor / IDE
+# ===========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===========================
+# Vite / React
+# ===========================
+frontend/dist/
+frontend/.vite/
+
+# ===========================
+# Misc
+# ===========================
+.cache/
+.parcel-cache/
+coverage/

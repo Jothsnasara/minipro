@@ -3,17 +3,16 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import VerifyOtp from "./components/VerifyOtp";
-
 import ResetPassword from "./components/ResetPassword";
-
 import Admin from "./components/Admin";
 import AdminDashboard from "./components/AdminDashboard";
 import UserManagement from "./components/UserManagement";
 import Projects from "./components/Projects";
-
-import Manager from "./components/Manager";
+import ManagerDashboard from "./components/TaskResource/ManagerDashboard";
+import TaskResourceAllocation from "./components/TaskResource/TaskResourceAllocation";
+import CostTracking from "./components/TaskResource/CostTracking";
 import Member from "./components/Member";
-import ProtectedRoute from "./components/Protectedroute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./components/Forgotpassword";
 
 function App() {
@@ -31,14 +30,15 @@ function App() {
         path="/admin"
         element={
           <ProtectedRoute allowedRole="admin">
-            <Admin /> {/* Only one sidebar here */}
+            <Admin />
           </ProtectedRoute>
         }
       >
-        <Route index element={<AdminDashboard />} /> {/* Default /admin */}
-        <Route path="users" element={<UserManagement />} /> {/* /admin/users */}
-        <Route path="projects" element={<Projects />} /> {/* /admin/projects */}
-
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="projects/:projectId/tasks" element={<TaskResourceAllocation />} />
+        <Route path="projects/:projectId/tasks/cost-tracking" element={<CostTracking />} />
       </Route>
 
       {/* Manager routes */}
@@ -46,10 +46,19 @@ function App() {
         path="/manager"
         element={
           <ProtectedRoute allowedRole="manager">
-            <Manager />
+            <ManagerDashboard />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<TaskResourceAllocation />} />
+        <Route path="dashboard" element={<TaskResourceAllocation />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="projects/:projectId/tasks" element={<TaskResourceAllocation />} />
+        <Route path="projects/:projectId/tasks/cost-tracking" element={<CostTracking />} />
+        <Route path="tasks" element={<TaskResourceAllocation />} />
+        <Route path="reports" element={<TaskResourceAllocation />} />
+        <Route path="notifications" element={<TaskResourceAllocation />} />
+      </Route>
 
       {/* Member routes */}
       <Route

@@ -29,73 +29,111 @@ const Admin = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#fff" }}>
+
       {/* Sidebar */}
-      <Box sx={{ width: 250, bgcolor: "#fdf9f9", borderRight: "1px solid #E5E7EB", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+      <Box sx={{
+        width: 256,
+        bgcolor: "#fff",
+        borderRight: "1px solid #eaecf0",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        flexShrink: 0
+      }}>
         <Box>
           {/* Logo */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 3 }}>
-            <Box component="img" src={logo} alt="ProjectPulse Logo" sx={{ width: 30, height: 30 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#000" }}>ProjectPulse</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 4 }}>
+            <Box component="img" src={logo} alt="ProjectPulse Logo" sx={{ width: 32, height: 32 }} />
+            <Typography variant="h6" sx={{ fontWeight: 800, color: "#334155", letterSpacing: "-0.02em" }}>ProjectPulse</Typography>
           </Box>
-          <Divider />
+          <Divider sx={{ mx: 2, opacity: 0.6 }} />
 
           {/* Sidebar Items */}
-          <List>
+          <List sx={{ px: 2, mt: 2 }}>
             {sidebarItems.map((item, index) => (
-              <ListItem 
-                button 
-                key={index} 
+              <ListItem
+                button
+                key={index}
                 selected={activeItem === item.path}
                 onClick={() => handleNavigate(item)}
-                sx={{ 
-                  "&.Mui-selected": { 
-                    bgcolor: "#e8ebf3", 
-                    borderRadius: 2,
+                sx={{
+                  borderRadius: 3,
+                  mb: 1,
+                  px: 2,
+                  py: 1.5,
+                  "&.Mui-selected": {
+                    bgcolor: "#eff6ff",
                     "& .MuiListItemIcon-root": { color: "#2563EB" },
-                    "& .MuiListItemText-primary": { color: "#2563EB" }
+                    "& .MuiListItemText-primary": { color: "#2563EB", fontWeight: 700 }
                   },
-                  "&:hover": { 
-                    bgcolor: "#cdcfd7", 
-                    borderRadius: 2, 
-                    transition: "all 0.3s ease-in-out" 
+                  "&:hover": {
+                    bgcolor: "#f8faff",
                   },
-                  mb: 0.5,
-                  transition: "all 0.3s ease-in-out"
+                  transition: "all 0.2s ease"
                 }}
               >
-                <ListItemIcon sx={{ color: "#2563EB" }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} sx={{ color: "#000" }} />
+                <ListItemIcon sx={{ color: "#94a3b8", minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    sx: { color: "#64748b", fontSize: "0.95rem", fontWeight: 600 }
+                  }}
+                />
               </ListItem>
             ))}
           </List>
         </Box>
 
         {/* Logout Button */}
-        <Box sx={{ p: 3 }}>
-          <Button 
-            variant="contained" 
-            color="error" 
-            startIcon={<Logout />} 
-            fullWidth 
+        <Box sx={{ p: 4 }}>
+          <Button
+            variant="contained"
+            fullWidth
             onClick={handleLogout}
+            startIcon={<Logout />}
+            sx={{
+              bgcolor: "#fff",
+              color: "#ef4444",
+              border: "2px solid #fee2e2",
+              boxShadow: "none",
+              borderRadius: 4,
+              fontWeight: 800,
+              py: 1.5,
+              textTransform: "none",
+              "&:hover": {
+                bgcolor: "#ef4444",
+                color: "#fff",
+                borderColor: "#ef4444"
+              }
+            }}
           >
             Logout
           </Button>
         </Box>
       </Box>
 
-      {/* Main Content */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      {/* Main Content Area */}
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
         {/* Topbar */}
-        <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end", alignItems: "center", bgcolor: "#fff", borderBottom: "1px solid #E5E7EB" }}>
-          <Typography sx={{ mr: 3 }}>admin@projecttrack.com</Typography>
-          <Notifications sx={{ mr: 2, cursor: "pointer" }} />
+        <Box sx={{
+          height: 80,
+          px: 6,
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          bgcolor: "#fff",
+          borderBottom: "1px solid #eaecf0",
+          position: "sticky",
+          top: 0,
+          zindex: 10
+        }}>
+          <Typography sx={{ mr: 4, color: "#64748b", fontWeight: 600, fontSize: "0.9rem" }}>admin@projecttrack.com</Typography>
+          <Notifications sx={{ color: "#334155", cursor: "pointer", fontSize: 28 }} />
         </Box>
 
         {/* Content Area */}
-        <Box sx={{ p: 4, flex: 1, backgroundColor: "#F9FAFB" }}>
+        <Box sx={{ p: 6, flex: 1, backgroundColor: "#fff" }}>
           <Outlet /> {/* Nested routes render here */}
         </Box>
       </Box>

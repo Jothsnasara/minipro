@@ -51,6 +51,7 @@ exports.register = async (req, res) => {
           return res.status(500).json({ message: "Registration failed" });
         }
 
+
         // 📧 Send email (unchanged)
         await transporter.sendMail({
           from: process.env.EMAIL_USER,
@@ -311,11 +312,12 @@ exports.updateUser = async (req, res) => {
   db.query(
     sql,
     [name, email, username, safeRole, safeStatus, id],
-    (err) => {
+    async (err) => {
       if (err) {
         console.log("UPDATE ERROR 👉", err);
         return res.status(500).json({ message: "Update failed" });
       }
+
 
       res.json({ message: "User updated successfully" });
     }
