@@ -1,12 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { Add, ArrowBack, AttachMoney, CheckCircle, Folder, Groups } from '@mui/icons-material';
 import {
-    Box, Typography, Button, Grid, Card, CardContent, LinearProgress, Chip,
-    Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem
+    Box,
+    Button,
+    Card, CardContent,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Grid,
+    LinearProgress,
+    MenuItem,
+    TextField,
+    Typography
 } from '@mui/material';
-import { Add, ArrowBack, Folder, CheckCircle, AttachMoney, Groups } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Projects = () => {
     const navigate = useNavigate();
@@ -281,7 +292,7 @@ const Projects = () => {
                                             onClick={() => {
                                                 const user = JSON.parse(localStorage.getItem('user') || '{}');
                                                 const prefix = user.role === 'manager' ? '/manager' : '/admin';
-                                                navigate(`${prefix}/projects/${project._id || project.id}/tasks`);
+                                                navigate(`${prefix}/projects/${project.project_id}/tasks`);
                                             }}
                                             sx={{
                                                 bgcolor: '#2563EB',
@@ -299,7 +310,7 @@ const Projects = () => {
                                             onClick={() => {
                                                 const user = JSON.parse(localStorage.getItem('user') || '{}');
                                                 const prefix = user.role === 'manager' ? '/manager' : '/admin';
-                                                const pid = project._id || project.id;
+                                                const pid = project.project_id;
                                                 navigate(`${prefix}/projects/${pid}/tasks/cost-tracking`, {
                                                     state: { project, from: `${prefix}/projects` }
                                                 });

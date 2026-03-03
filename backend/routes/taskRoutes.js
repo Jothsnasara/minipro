@@ -9,7 +9,11 @@ const {
     deleteTask,
     getWorkloadData,
     getResourceUsage,
-    getUsers
+    getUsers,
+    getMemberStats,
+    getMemberTasks,
+    updateTaskMember,
+    getMemberActivity
 } = require('../controllers/taskController');
 
 // Project Routes
@@ -26,5 +30,11 @@ router.delete('/tasks/:id', deleteTask);
 router.get('/dashboard/summary/:projectId', getSummaryData);
 router.get('/dashboard/team-workload/:projectId', getWorkloadData);
 router.get('/dashboard/resource-usage/:projectId', getResourceUsage);
+
+// Member Dashboard Routes
+router.get('/member/stats/:userId', getMemberStats);
+router.get('/member/tasks/:userId', getMemberTasks);
+router.put('/member/tasks/:taskId', updateTaskMember);
+router.get('/member/activity/:userId', getMemberActivity);
 
 module.exports = router;

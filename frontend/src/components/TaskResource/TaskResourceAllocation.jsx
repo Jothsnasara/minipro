@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
+    ArrowLeft,
     CheckCircle,
-    ListTodo,
-    Users,
     Clock,
-    Plus,
     DollarSign,
-    ArrowLeft
+    ListTodo,
+    Plus,
+    Users
 } from 'lucide-react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import ResourceUsage from './ResourceUsage';
 import SummaryCard from './SummaryCard';
 import TaskTable from './TaskTable';
 import TeamWorkload from './TeamWorkload';
-import ResourceUsage from './ResourceUsage';
 
 const TaskResourceAllocation = () => {
     const { projectId } = useParams();
@@ -32,7 +32,7 @@ const TaskResourceAllocation = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
-        title: '',
+        taskTitle: '',
         assignedTo: '',
         priority: 'Medium',
         status: 'Todo',
@@ -63,32 +63,38 @@ const TaskResourceAllocation = () => {
                 currentProjectId = sp.project_id || sp._id || sp.id;
             }
 
-            if (!currentProjectId || currentProjectId === 'undefined') {
+            if (!currentProjectId || currentProjectId === 'undefined' || currentProjectId === null) {
+                console.log('[TaskAllocation] No project ID found in URL or state, fetching all projects...');
                 const projectRes = await axios.get('http://localhost:5001/projects').catch(() => ({ data: [] }));
                 const first = projectRes.data[0];
-                if (first) currentProjectId = first.project_id || first._id || first.id;
+                if (first) {
+                    currentProjectId = first.project_id || first._id || first.id;
+                    console.log('[TaskAllocation] Using first available project:', currentProjectId);
+                }
             }
 
-            const numericProjectId = (currentProjectId && currentProjectId !== 'undefined') ? parseInt(currentProjectId, 10) : null;
+            const numericProjectId = currentProjectId ? parseInt(currentProjectId, 10) : null;
 
             if (numericProjectId && !isNaN(numericProjectId)) {
                 setResolvedProjectId(numericProjectId);
-                console.log('[TaskAllocation] Resolved project ID:', numericProjectId);
+                console.log('[TaskAllocation] Final Resolved project ID:', numericProjectId);
             } else {
+                console.warn('[TaskAllocation] Failed to resolve a valid numeric project ID');
                 setResolvedProjectId(null);
             }
 
             // ── 2. Fetch team members (MySQL role=member) ──
             try {
                 const usersRes = await axios.get('http://localhost:5001/users');
-                const members = usersRes.data.filter(u => u.role === 'member');
+                const members = usersRes.data.filter(u => (u.role || '').toLowerCase() === 'member');
+                console.log('[TaskAllocation] Fetched members:', members.length);
                 setTeamMembers(members);
             } catch (err) {
                 console.error('Failed to fetch users:', err);
             }
 
             // ── 3. Fetch all dashboard data ──
-            if (numericProjectId) {
+            if (numericProjectId && !isNaN(numericProjectId)) {
                 console.log('Fetching data for Project ID:', numericProjectId);
                 const [tasksRes, workloadRes, usageRes, summaryRes, projectsRes] = await Promise.all([
                     axios.get(`${API_BASE}/projects/${numericProjectId}/tasks`).catch(() => ({ data: [] })),
@@ -108,6 +114,8 @@ const TaskResourceAllocation = () => {
                     return String(pid) === String(numericProjectId);
                 });
                 setProject(proj || location.state?.project || null);
+            } else {
+                setLoading(false);
             }
             setLoading(false);
         } catch (error) {
@@ -123,6 +131,7 @@ const TaskResourceAllocation = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        console.log(`[Input] ${name}: ${value}`);
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -137,16 +146,20 @@ const TaskResourceAllocation = () => {
                 return;
             }
             const taskData = {
-                ...formData,
-                projectId: pid,
+                title: formData.taskTitle,
+                assignedTo: formData.assignedTo,
+                priority: formData.priority,
+                status: formData.status,
+                dueDate: formData.dueDate,
+                estimatedHours: Number(formData.estimatedHours),
                 resources: formData.resources.split(',').map(r => r.trim()).filter(r => r),
-                estimatedHours: Number(formData.estimatedHours)
+                projectId: pid
             };
 
             await axios.post(`${API_BASE}/tasks`, taskData);
             setIsModalOpen(false);
             setFormData({
-                title: '',
+                taskTitle: '',
                 assignedTo: '',
                 priority: 'Medium',
                 status: 'Todo',
@@ -273,7 +286,10 @@ const TaskResourceAllocation = () => {
                                 <div className="space-y-2 text-left">
                                     <label className="text-sm font-black text-[#475569] uppercase tracking-wider">Task Title</label>
                                     <input
-                                        required name="title" value={formData.title} onChange={handleInputChange}
+                                        required
+                                        name="taskTitle"
+                                        value={formData.taskTitle}
+                                        onChange={handleInputChange}
                                         placeholder="e.g. Design System Audit"
                                         className="w-full px-5 py-4 rounded-[16px] border-2 border-slate-100 focus:border-[#2563EB] outline-none font-bold text-[#334155] transition-all bg-[#f8faff] focus:bg-white"
                                     />

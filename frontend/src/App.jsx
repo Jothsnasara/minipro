@@ -1,19 +1,18 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import VerifyOtp from "./components/VerifyOtp";
-import ResetPassword from "./components/ResetPassword";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Admin from "./components/Admin";
 import AdminDashboard from "./components/AdminDashboard";
-import UserManagement from "./components/UserManagement";
+import ForgotPassword from "./components/Forgotpassword";
+import Login from "./components/Login";
+import Member from "./components/Member";
 import Projects from "./components/Projects";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Register from "./components/Register";
+import ResetPassword from "./components/ResetPassword";
+import CostTracking from "./components/TaskResource/CostTracking";
 import ManagerDashboard from "./components/TaskResource/ManagerDashboard";
 import TaskResourceAllocation from "./components/TaskResource/TaskResourceAllocation";
-import CostTracking from "./components/TaskResource/CostTracking";
-import Member from "./components/Member";
-import ProtectedRoute from "./components/ProtectedRoute";
-import ForgotPassword from "./components/Forgotpassword";
+import UserManagement from "./components/UserManagement";
+import VerifyOtp from "./components/VerifyOtp";
 
 function App() {
   return (
@@ -62,7 +61,7 @@ function App() {
 
       {/* Member routes */}
       <Route
-        path="/member"
+        path="/member/*"
         element={
           <ProtectedRoute allowedRole="member">
             <Member />
