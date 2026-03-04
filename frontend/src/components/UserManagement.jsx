@@ -19,7 +19,7 @@ import {
   AdminPanelSettings, People
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
 const roleColors = {
   admin: "#EDE9FE",
@@ -45,7 +45,7 @@ export default function UserManagement() {
   }, []);
 
   const fetchUsers = async () => {
-    const res = await axios.get("http://localhost:5001/users");
+    const res = await api.get("/users");
     setUsers(res.data);
   };
 
@@ -58,7 +58,7 @@ export default function UserManagement() {
     if (!resignDateInput) return;
 
     try {
-      await axios.put(`http://localhost:5001/users/${id}/resign`, {
+      await api.put(`/users/${id}/resign`, {
         resign_date: resignDateInput
       });
       fetchUsers(); // refresh table
@@ -97,7 +97,7 @@ export default function UserManagement() {
             backgroundColor: "#2563EB",
             "&:hover": { backgroundColor: "#1D4ED8" },
           }}
-          onClick={() => navigate("/register")}
+          onClick={() => navigate("/admin/register")}
         >
           Add New User
         </Button>
@@ -186,7 +186,7 @@ export default function UserManagement() {
                   {/* Edit button */}
                   <Button
                     size="small"
-                    onClick={() => navigate("/register", { state: { user } })}
+                    onClick={() => navigate("/admin/register", { state: { user } })}
                     disabled={!!user.resign_date}
                   >
                     <Edit sx={{ color: user.resign_date ? "#A1A1A1" : "#2563EB" }} />
@@ -200,7 +200,7 @@ export default function UserManagement() {
                         onChange={(newValue) => setResignDate(newValue)}
                         onAccept={async (date) => {
                           try {
-                            await axios.put(`http://localhost:5001/users/${user.id}/resign`, {
+                            await api.put(`/users/${user.id}/resign`, {
                               resign_date: dayjs(date).format("YYYY-MM-DD"),
                             });
                             setOpenResignId(null);

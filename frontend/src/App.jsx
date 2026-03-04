@@ -25,7 +25,6 @@ function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/verify-otp" element={<VerifyOtp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
@@ -42,7 +41,7 @@ function App() {
         <Route index element={<AdminDashboard />} /> {/* Default /admin */}
         <Route path="users" element={<UserManagement />} /> {/* /admin/users */}
         <Route path="projects" element={<Projects />} /> {/* /admin/projects */}
-
+        <Route path="register" element={<Register />} /> {/* /admin/register */}
       </Route>
 
       {/* Manager routes */}

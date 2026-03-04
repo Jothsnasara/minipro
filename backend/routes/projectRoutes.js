@@ -1,22 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const projectController = require("../controllers/projectController");
+const { verifyToken, isManager, isAdmin } = require("../middleware/authMiddleware");
 
 // --- ADD MEMBER ROUTE ---
-router.post('/:projectId/members', projectController.addProjectMember);
+router.post('/:projectId/members', verifyToken, isManager, projectController.addProjectMember);
 
 // --- MANAGER DASHBOARD ROUTES ---
-router.get("/manager/:managerId", projectController.getManagerProjects);
-router.get("/manager/:managerId/team-members", projectController.getManagerTeamMembersCount);
-router.get("/manager/:managerId/unfilled-projects", projectController.getUnfilledProjects);
+router.get("/manager/:managerId", verifyToken, isManager, projectController.getManagerProjects);
+router.get("/manager/:managerId/team-members", verifyToken, isManager, projectController.getManagerTeamMembersCount);
+router.get("/manager/:managerId/unfilled-projects", verifyToken, isManager, projectController.getUnfilledProjects);
 
 // --- GLOBAL PROJECT ROUTES ---
-router.get("/", projectController.getAllProjects);
-router.post("/", projectController.createProject);
-router.post("/tasks", projectController.createTask);
+router.get("/", verifyToken, projectController.getAllProjects);
+router.post("/", verifyToken, isAdmin, projectController.createProject);
+router.post("/tasks", verifyToken, isManager, projectController.createTask);
 
 // --- ACTION ROUTES ---
-router.put('/complete-project/:id', projectController.completeProject);
-router.get("/:projectId/members", projectController.getProjectMembers);
+router.put('/complete-project/:id', verifyToken, isManager, projectController.completeProject);
+router.get("/:projectId/members", verifyToken, projectController.getProjectMembers);
 
 module.exports = router;

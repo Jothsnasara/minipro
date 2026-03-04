@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 import "../styles/auth.css";
 import logo from "../assets/projectpulse-logo.png";
 
@@ -47,8 +47,8 @@ function Register() {
     try {
       if (editUser) {
         // UPDATE USER
-        await axios.put(
-          `http://localhost:5001/users/${editUser.id}`,
+        await api.put(
+          `/users/${editUser.id}`,
           { name, email, username, role }
         );
         setSuccess("User updated successfully!");
@@ -59,7 +59,7 @@ function Register() {
           return;
         }
 
-        await axios.post("http://localhost:5001/register", {
+        await api.post("/register", {
           name,
           email,
           username,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import '../styles/ManagerDashboard.css';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
@@ -9,13 +9,13 @@ const ManagerProjects = () => {
     const navigate = useNavigate();
     const [projects, setProjects] = useState([]);
     const [managerId, setManagerId] = useState(null);
-    const [members, setMembers] = useState([]); 
+    const [members, setMembers] = useState([]);
     const [teamOpen, setTeamOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
 
     const fetchProjects = async (id) => {
         try {
-            const res = await axios.get(`http://localhost:5001/projects/manager/${id}`);
+            const res = await api.get(`/projects/manager/${id}`);
             setProjects(res.data);
         } catch (err) {
             console.error("Error fetching projects:", err);
@@ -23,14 +23,14 @@ const ManagerProjects = () => {
     };
 
     const fetchAllMembers = async () => {
-    try {
-        // FIXED: Changed from /auth/users/members to /api/users
-        const res = await axios.get('http://localhost:5001/api/users');
-        setMembers(res.data);
-    } catch (err) {
-        console.error("Member Fetch Error:", err);
-    }
-};
+        try {
+            // FIXED: Changed from /auth/users/members to /api/users
+            const res = await api.get('/api/users');
+            setMembers(res.data);
+        } catch (err) {
+            console.error("Member Fetch Error:", err);
+        }
+    };
 
     useEffect(() => {
         const userStr = localStorage.getItem("user");
@@ -55,7 +55,7 @@ const ManagerProjects = () => {
         <div className="management-page">
             <header className="management-header">
                 <div className="header-left">
-                    <div onClick={() => navigate('/manager-dashboard')} className="back-statement" style={{cursor: 'pointer'}}>
+                    <div onClick={() => navigate('/manager-dashboard')} className="back-statement" style={{ cursor: 'pointer' }}>
                         ← Back to Dashboard
                     </div>
                     <h1>Project Management</h1>
@@ -132,7 +132,7 @@ const ManagerProjects = () => {
                                 <MuiButton size="small" onClick={async () => {
                                     try {
                                         const pId = selectedProject.project_id || selectedProject.id;
-                                        await axios.post(`http://localhost:5001/projects/${pId}/members`, { userId: member.id });
+                                        await api.post(`/projects/${pId}/members`, { userId: member.id });
                                         alert("Member added!");
                                         fetchProjects(managerId); // Refresh count
                                     } catch (err) {

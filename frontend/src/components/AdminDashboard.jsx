@@ -1,12 +1,10 @@
-import { useNavigate } from "react-router-dom";
-
-
+import api from "../services/api";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Box, Typography, Card, CardContent, Button, Divider, LinearProgress
 } from "@mui/material";
 import { People, Folder, BarChart } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   // State variables
@@ -24,8 +22,8 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const usersRes = await axios.get("http://localhost:5001/users");
-      const projectsRes = await axios.get("http://localhost:5001/projects");
+      const usersRes = await api.get("/users");
+      const projectsRes = await api.get("/projects");
       //const activitiesRes = await axios.get("http://localhost:5001/activities"); 
 
       setUsers(usersRes.data);

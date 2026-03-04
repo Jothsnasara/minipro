@@ -30,16 +30,18 @@ function Login() {
         password
       });
 
-      const user = res.data.user;
+      const { user, token } = res.data;
+      console.log("[LOGIN DEBUG] Login successful! Response user:", user);
 
       // Save logged-in user
       localStorage.setItem("user", JSON.stringify(user));
+      if (token) localStorage.setItem("token", token);
 
-      // 🔒 INACTIVE USER HANDLING
+      /* // 🔒 INACTIVE USER HANDLING (Commented out as per new request)
       if (user.status === "Inactive") {
         navigate("/inactive-user");
         return;
-      }
+      } */
 
       // 🔐 Role-based redirect (ACTIVE users only)
       if (user.role === "admin") navigate("/admin");
@@ -47,6 +49,7 @@ function Login() {
       else navigate("/member");
 
     } catch (err) {
+      console.error("[LOGIN DEBUG] Login failed. Error:", err.response?.data || err.message);
       const msg = err.response?.data?.message;
 
       if (msg === "Please verify your account with OTP first") {

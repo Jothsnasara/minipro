@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { Add, ArrowBack, Folder, CheckCircle, AttachMoney, Groups } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import dayjs from 'dayjs';
 import '../styles/ManagerDashboard.css';
 
@@ -40,7 +40,7 @@ const Projects = () => {
     const fetchManagers = async () => {
         try {
             // Updated to use the specific endpoint as requested
-            const res = await axios.get('http://localhost:5001/users/managers');
+            const res = await api.get('/users/managers');
             setManagers(res.data);
             console.log("Fetched Managers:", res.data);
         } catch (err) {
@@ -55,7 +55,7 @@ const Projects = () => {
         try {
             // Fetch Projects
             try {
-                const projectsRes = await axios.get('http://localhost:5001/projects');
+                const projectsRes = await api.get('/projects');
                 setProjects(projectsRes.data);
             } catch (err) {
                 console.error("Failed to fetch projects:", err);
@@ -64,7 +64,7 @@ const Projects = () => {
 
             // Fetch Users (for summary)
             try {
-                const usersRes = await axios.get('http://localhost:5001/users');
+                const usersRes = await api.get('/users');
                 setUsers(usersRes.data);
             } catch (err) {
                 console.error("Failed to fetch users:", err);
@@ -100,7 +100,7 @@ const Projects = () => {
                 alert("Please fill all required fields");
                 return;
             }
-            await axios.post('http://localhost:5001/projects', formData);
+            await api.post('/projects', formData);
             fetchData(); // Refresh list
             handleClose();
         } catch (error) {

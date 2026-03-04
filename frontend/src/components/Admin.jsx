@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Logout } from "@mui/icons-material";
-import { Box, Typography, Button, List, ListItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
+import { Box, Typography, Button, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider } from "@mui/material";
 import { Dashboard, People, Folder, BarChart, Notifications } from "@mui/icons-material";
 import logo from "../assets/projectpulse-logo.png";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -25,12 +25,14 @@ const Admin = () => {
 
   const handleNavigate = (item) => {
     setActiveItem(item.path);
-    navigate(item.path);
+    if (item.text !== "Notifications" && item.text !== "Reports & Analytics") {
+      navigate(item.path);
+    }
   };
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      
+
       {/* Sidebar */}
       <Box sx={{ width: 250, bgcolor: "#fdf9f9", borderRight: "1px solid #E5E7EB", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         <Box>
@@ -44,29 +46,33 @@ const Admin = () => {
           {/* Sidebar Items */}
           <List>
             {sidebarItems.map((item, index) => (
-              <ListItem 
-                button 
-                key={index} 
-                selected={activeItem === item.path}
-                onClick={() => handleNavigate(item)}
-                sx={{ 
-                  "&.Mui-selected": { 
-                    bgcolor: "#e8ebf3", 
-                    borderRadius: 2,
-                    "& .MuiListItemIcon-root": { color: "#2563EB" },
-                    "& .MuiListItemText-primary": { color: "#2563EB" }
-                  },
-                  "&:hover": { 
-                    bgcolor: "#cdcfd7", 
-                    borderRadius: 2, 
-                    transition: "all 0.3s ease-in-out" 
-                  },
+              <ListItem
+                key={index}
+                disablePadding
+                sx={{
                   mb: 0.5,
                   transition: "all 0.3s ease-in-out"
                 }}
               >
-                <ListItemIcon sx={{ color: "#2563EB" }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} sx={{ color: "#000" }} />
+                <ListItemButton
+                  selected={activeItem === item.path}
+                  onClick={() => handleNavigate(item)}
+                  sx={{
+                    borderRadius: 2,
+                    "&.Mui-selected": {
+                      bgcolor: "#e8ebf3",
+                      "& .MuiListItemIcon-root": { color: "#2563EB" },
+                      "& .MuiListItemText-primary": { color: "#2563EB" }
+                    },
+                    "&:hover": {
+                      bgcolor: "#cdcfd7",
+                      transition: "all 0.3s ease-in-out"
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: "#2563EB" }}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} sx={{ color: "#000" }} />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>
@@ -74,11 +80,11 @@ const Admin = () => {
 
         {/* Logout Button */}
         <Box sx={{ p: 3 }}>
-          <Button 
-            variant="contained" 
-            color="error" 
-            startIcon={<Logout />} 
-            fullWidth 
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<Logout />}
+            fullWidth
             onClick={handleLogout}
           >
             Logout

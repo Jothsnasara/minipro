@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import '../styles/ManagerDashboard.css';
 
@@ -15,11 +15,11 @@ const ManagerDashboard = () => {
     const fetchProjects = async (id) => {
         try {
             // Using port 5001 as per configuration
-            const response = await axios.get(`http://localhost:5001/projects/manager/${id}`);
+            const response = await api.get(`/projects/manager/${id}`);
             setProjects(response.data);
 
             // Fetch team members count
-            const teamRes = await axios.get(`http://localhost:5001/projects/manager/${id}/team-members`);
+            const teamRes = await api.get(`/projects/manager/${id}/team-members`);
             setTeamMemberCount(teamRes.data.team_count);
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -69,7 +69,7 @@ const ManagerDashboard = () => {
                 // But generally specific delete logic wasn't in previous plans. 
                 // Using route from provided frontend code: /api/projects/delete/:id -> adapting to our backend if needed
                 // For now, let's assume standard REST: DELETE /projects/:id
-                await axios.delete(`http://localhost:5001/projects/${modalConfig.project_id}`);
+                await api.delete(`/projects/${modalConfig.project_id}`);
                 setModalConfig({ ...modalConfig, isOpen: false });
                 // Refresh
                 if (managerId) fetchProjects(managerId);

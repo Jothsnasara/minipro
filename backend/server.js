@@ -5,6 +5,7 @@ const db = require('./config/db'); // 1. Move DB import to the top
 
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const { verifyToken } = require("./middleware/authMiddleware");
 
 const app = express();
 
@@ -23,7 +24,7 @@ app.use("/projects", projectRoutes);
 app.use("/", authRoutes);
 
 // 2. The User Fetch Route (Keep this here or move to authRoutes)
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', verifyToken, async (req, res) => {
     try {
         // This will now work perfectly once you've run the ALTER TABLE command in MySQL
         const [rows] = await db.query("SELECT id, username, specialization FROM users WHERE role = 'member'");

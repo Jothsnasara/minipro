@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useNavigate, useLocation } from 'react-router-dom';
-import '../styles/ManagerDashboard.css'; 
+import '../styles/ManagerDashboard.css';
 
 const ProjectForm = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { project_id, project_name } = location.state || {}; 
+    const { project_id, project_name } = location.state || {};
 
     // Configuration: Centralize the backend URL to make changes easier
     const BACKEND_URL = "http://localhost:5001";
@@ -19,7 +19,7 @@ const ProjectForm = () => {
         start_date: '',
         end_date: '',
         manager_id: '',
-        selectedMembers: [] 
+        selectedMembers: []
     });
 
     const [availableMembers, setAvailableMembers] = useState([]);
@@ -46,7 +46,7 @@ const ProjectForm = () => {
         const fetchMembers = async () => {
             try {
                 // Changed from 5000 to 5001 to match your server log
-                const res = await axios.get(`${BACKEND_URL}/api/users`); 
+                const res = await api.get(`/api/users`);
                 console.log("Team members loaded:", res.data);
                 setAvailableMembers(res.data);
             } catch (err) {
@@ -66,7 +66,7 @@ const ProjectForm = () => {
             const isSelected = prev.selectedMembers.includes(memberId);
             return {
                 ...prev,
-                selectedMembers: isSelected 
+                selectedMembers: isSelected
                     ? prev.selectedMembers.filter(id => id !== memberId)
                     : [...prev.selectedMembers, memberId]
             };
@@ -75,7 +75,7 @@ const ProjectForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Date Validation
         const start = new Date(formData.start_date);
         const end = new Date(formData.end_date);
@@ -92,7 +92,7 @@ const ProjectForm = () => {
 
         try {
             // Update project details + send member IDs to the backend on Port 5001
-            await axios.put(`${BACKEND_URL}/projects/complete-project/${formData.project_id}`, formData);
+            await api.put(`/projects/complete-project/${formData.project_id}`, formData);
             alert("Project Setup Completed & Team Assigned!");
             navigate('/manager-dashboard');
         } catch (err) {
@@ -116,24 +116,24 @@ const ProjectForm = () => {
                 <div className="form-grid">
                     <div className="input-group full-width">
                         <label>Description</label>
-                        <textarea 
-                            name="description" 
-                            placeholder="Provide project details..." 
-                            onChange={handleChange} 
-                            value={formData.description} 
-                            required 
+                        <textarea
+                            name="description"
+                            placeholder="Provide project details..."
+                            onChange={handleChange}
+                            value={formData.description}
+                            required
                         />
                     </div>
 
                     <div className="input-group full-width">
                         <label>Budget ($)</label>
-                        <input 
-                            type="number" 
-                            name="budget" 
+                        <input
+                            type="number"
+                            name="budget"
                             placeholder="0.00"
-                            onChange={handleChange} 
-                            value={formData.budget} 
-                            required 
+                            onChange={handleChange}
+                            value={formData.budget}
+                            required
                         />
                     </div>
 
@@ -153,9 +153,9 @@ const ProjectForm = () => {
                         <label style={{ fontWeight: 'bold', marginBottom: '10px', display: 'block' }}>
                             Assign Team Members ({formData.selectedMembers.length} selected)
                         </label>
-                        <div className="members-checklist" style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                        <div className="members-checklist" style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
                             gap: '10px',
                             background: '#f9fafb',
                             padding: '15px',
@@ -167,15 +167,15 @@ const ProjectForm = () => {
                             {availableMembers.length > 0 ? (
                                 availableMembers.map(member => (
                                     <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             id={`mem-${member.id}`}
                                             checked={formData.selectedMembers.includes(member.id)}
                                             onChange={() => handleMemberChange(member.id)}
                                         />
                                         <label htmlFor={`mem-${member.id}`} style={{ fontSize: '0.9rem', cursor: 'pointer' }}>
-                                            {member.username || member.name} 
-                                            <span style={{color: '#9ca3af', fontSize: '0.75rem', marginLeft: '5px'}}>
+                                            {member.username || member.name}
+                                            <span style={{ color: '#9ca3af', fontSize: '0.75rem', marginLeft: '5px' }}>
                                                 ({member.specialization || 'Member'})
                                             </span>
                                         </label>
