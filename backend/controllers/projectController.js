@@ -1,246 +1,172 @@
-const db = require("../config/db");
+const db = require("../config/db"); // IMPORTED ONLY ONCE AT THE TOP
 
 /* ================= GET ALL PROJECTS ================= */
 exports.getAllProjects = async (req, res) => {
     const sql = `
-    SELECT 
-      p.*,
-      u.name as manager_name
+    SELECT p.*, u.name as manager_name
     FROM projects p
     LEFT JOIN users u ON p.manager_id = u.id
     ORDER BY p.start_date DESC
   `;
-
     try {
         const [results] = await db.query(sql);
         res.json(results);
     } catch (err) {
-        console.error("GET PROJECTS ERROR 👉", err);
+        console.error("GET PROJECTS ERROR:", err);
         res.status(500).json({ message: "Failed to fetch projects" });
     }
 };
 
-/* ================= GET MANAGER PROJECTS ================= */
+/* ================= GET MANAGER PROJECTS (With Member Count) ================= */
 exports.getManagerProjects = async (req, res) => {
     const { managerId } = req.params;
-    console.log(`[DEBUG] Fetching projects for manager ID: ${managerId}`);
+    if (!managerId) return res.status(400).json({ message: "Manager ID is required" });
 
-    if (!managerId) {
-        return res.status(400).json({ message: "Manager ID is required" });
-    }
-
+    // This query includes the subquery for member_count AND the manager name
     const sql = `
-    SELECT 
-      p.*,
-      u.name as manager_name
-    FROM projects p
-    LEFT JOIN users u ON p.manager_id = u.id
-    WHERE p.manager_id = ?
-    ORDER BY p.end_date ASC
-  `;
-
+        SELECT p.*, u.name as manager_name, 
+        (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) as member_count
+        FROM projects p
+        LEFT JOIN users u ON p.manager_id = u.id
+        WHERE p.manager_id = ?
+        ORDER BY p.end_date ASC
+    `;
     try {
         const [results] = await db.query(sql, [managerId]);
-        console.log(`[DEBUG] Found ${results.length} projects for manager ${managerId}`);
         res.json(results);
     } catch (err) {
-        console.error("GET MANAGER PROJECTS ERROR 👉", err);
+        console.error("GET MANAGER PROJECTS ERROR:", err);
         res.status(500).json({ message: "Failed to fetch manager projects" });
     }
 };
 
-/* ================= CREATE PROJECT ================= */
-exports.createProject = async (req, res) => {
-    const {
-        project_name,
-        manager_id,
-        description,
-        budget,
-        start_date,
-        end_date,
-        status
-    } = req.body;
+/* ================= ADD SINGLE MEMBER TO TEAM ================= */
+exports.addProjectMember = async (req, res) => {
+    const { projectId } = req.params;
+    const { userId } = req.body;
 
-    if (!project_name) {
-        return res.status(400).json({ message: "Project name is required" });
-    }
-    if (!manager_id) {
-        return res.status(400).json({ message: "Manager assignment is required" });
-    }
-
-    const sql = `
-    INSERT INTO projects 
-    (project_name, description, budget, start_date, end_date, manager_id, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
-
-    const statusValue = status || 'Planning';
-    const descriptionValue = description || '';
-    const budgetValue = budget || 0;
-    const startDateValue = start_date || null;
-    const endDateValue = end_date || null;
+    if (!projectId || !userId) return res.status(400).json({ message: "Missing data" });
 
     try {
-        const [result] = await db.query(
-            sql,
-            [project_name, descriptionValue, budgetValue, startDateValue, endDateValue, manager_id, statusValue]
-        );
+        const [existing] = await db.query("SELECT * FROM project_members WHERE project_id = ? AND user_id = ?", [projectId, userId]);
+        if (existing.length > 0) return res.status(400).json({ message: "Member already in team" });
 
-        // 3. Update Manager Status to 'Active'
-        const updateManagerSql = "UPDATE users SET status = 'Active' WHERE id = ?";
-        try {
-            await db.query(updateManagerSql, [manager_id]);
-        } catch (updateErr) {
-            console.error("FAILED TO ACTIVATE MANAGER 👉", updateErr);
-        }
+        await db.query("INSERT INTO project_members (project_id, user_id) VALUES (?, ?)", [projectId, userId]);
+        res.json({ message: "Member added successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
 
+/* ================= CREATE PROJECT (Initial Assignment) ================= */
+exports.createProject = async (req, res) => {
+    const { project_name, manager_id, description, budget, start_date, end_date, status } = req.body;
+
+    if (!project_name || !manager_id) {
+        return res.status(400).json({ message: "Project name and Manager are required" });
+    }
+
+    const sql = `INSERT INTO projects (project_name, description, budget, start_date, end_date, manager_id, status) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+    try {
+        const [result] = await db.query(sql, [
+            project_name, 
+            description || '', 
+            budget || 0, 
+            start_date || null, 
+            end_date || null, 
+            manager_id, 
+            status || 'Planning'
+        ]);
+
+        await db.query("UPDATE users SET status = 'Active' WHERE id = ?", [manager_id]);
         res.status(201).json({ message: "Project assigned successfully", projectId: result.insertId });
     } catch (err) {
-        console.error("CREATE PROJECT ERROR 👉", err);
         res.status(500).json({ message: "Failed to assign project: " + err.message });
     }
 };
 
-/* ================= GET MANAGER TEAM MEMBERS (KPI) ================= */
-exports.getManagerTeamMembers = async (req, res) => {
-    const { managerId } = req.params;
-
-    if (!managerId) {
-        return res.status(400).json({ message: "Manager ID is required" });
-    }
-
-    const sql = `
-        SELECT COUNT(DISTINCT t.assigned_to) as team_count
-        FROM tasks t
-        JOIN projects p ON t.project_id = p.project_id
-        WHERE p.manager_id = ?
-    `;
+/* ================= COMPLETE PROJECT & ASSIGN MEMBERS ================= */
+exports.completeProject = async (req, res) => {
+    const projectId = req.params.id;
+    const { description, budget, start_date, end_date, selectedMembers } = req.body;
 
     try {
-        const [results] = await db.query(sql, [managerId]);
-        res.json({ team_count: results[0].team_count });
+        const sqlUpdateProject = `
+            UPDATE projects 
+            SET description = ?, budget = ?, start_date = ?, end_date = ?, status = 'Active' 
+            WHERE project_id = ?
+        `;
+        const [result] = await db.query(sqlUpdateProject, [description, budget, start_date, end_date, projectId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Project not found." });
+        }
+
+        if (selectedMembers && selectedMembers.length > 0) {
+            await db.query("DELETE FROM project_members WHERE project_id = ?", [projectId]);
+            const memberData = selectedMembers.map(userId => [parseInt(projectId), parseInt(userId)]);
+            const sqlInsertMembers = "INSERT INTO project_members (project_id, user_id) VALUES ?";
+            await db.query(sqlInsertMembers, [memberData]);
+        }
+
+        res.json({ message: "Project activated and team members assigned successfully!" });
     } catch (err) {
-        console.error("GET TEAM MEMBERS ERROR 👉", err);
-        res.status(500).json({ message: "Failed to fetch team members count" });
+        console.error("COMPLETE PROJECT ERROR:", err);
+        res.status(500).json({ error: "Database error: " + err.message });
     }
 };
 
-/* ================= GET UNFILLED PROJECTS (Status = Planning) ================= */
+/* ================= KPI: GET TEAM MEMBERS COUNT ================= */
+exports.getManagerTeamMembersCount = async (req, res) => {
+    const { managerId } = req.params;
+    const sql = "SELECT COUNT(DISTINCT pm.user_id) AS team_count FROM project_members pm JOIN projects p ON pm.project_id = p.project_id WHERE p.manager_id = ?";
+    try {
+        const [rows] = await db.query(sql, [managerId]);
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/* ================= GET UNFILLED PROJECTS ================= */
 exports.getUnfilledProjects = async (req, res) => {
     const { managerId } = req.params;
-    if (!managerId) return res.status(400).json({ message: "Manager ID required" });
-
-    const sql = "SELECT id as project_id, project_name FROM projects WHERE manager_id = ? AND (status = 'Planning' OR status = 'planning')";
-
+    const sql = "SELECT project_id, project_name FROM projects WHERE manager_id = ? AND status = 'Planning'";
     try {
         const [results] = await db.query(sql, [managerId]);
         res.json(results);
     } catch (err) {
-        console.error("GET UNFILLED ERROR", err);
         res.status(500).json({ message: "Failed to fetch unfilled projects" });
-    }
-};
-
-/* ================= COMPLETE PROJECT DETAILS (Status -> Active) ================= */
-exports.completeProject = async (req, res) => {
-    const { id } = req.params;
-    const { description, budget, start_date, end_date } = req.body;
-
-    const sql = `
-        UPDATE projects 
-        SET description = ?, budget = ?, start_date = ?, end_date = ?, status = 'Active'
-        WHERE id = ?
-    `;
-
-    try {
-        const [result] = await db.query(sql, [description, budget, start_date, end_date, id]);
-        res.json({ message: "Project updated to Active" });
-    } catch (err) {
-        console.error("COMPLETE PROJECT ERROR", err);
-        res.status(500).json({ message: "Failed to update project" });
     }
 };
 
 /* ================= CREATE TASK ================= */
 exports.createTask = async (req, res) => {
     const { project_id, task_name, description, memberId, priority, due_date, resources } = req.body;
-
-    if (!project_id || !task_name || !memberId || !due_date) {
-        return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const sql = `
-        INSERT INTO tasks (project_id, task_name, description, assigned_to, priority, due_date, status, resources)
-        VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?)
-    `;
-
+    const sql = `INSERT INTO tasks (project_id, task_name, description, assigned_to, priority, due_date, status, resources) VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?)`;
     try {
-        const [result] = await db.query(sql, [
-            project_id,
-            task_name,
-            description || '',
-            memberId,
-            priority || 'Medium',
-            due_date,
-            JSON.stringify(resources || [])
-        ]);
-
-        // Update User Status to 'Active' when assigned a task
-        const updateUserSql = "UPDATE users SET status = 'Active' WHERE id = ?";
-        await db.query(updateUserSql, [memberId]);
-
+        const [result] = await db.query(sql, [project_id, task_name, description || '', memberId, priority || 'Medium', due_date, JSON.stringify(resources || [])]);
+        await db.query("UPDATE users SET status = 'Active' WHERE id = ?", [memberId]);
         res.status(201).json({ message: "Task assigned successfully", taskId: result.insertId });
     } catch (err) {
-        if (err.code === '45000' || (err.sqlState === '45000')) {
-            return res.status(400).json({ message: err.message });
-        }
-        console.error("CREATE TASK ERROR 👉", err);
-        res.status(500).json({ message: "Failed to create task: " + err.message });
-    }
-};
-/* ================= ASSIGN MEMBER TO PROJECT ================= */
-exports.assignMemberToProject = async (req, res) => {
-    const { projectId } = req.params;
-    const { userId } = req.body;
-
-    if (!projectId || !userId) {
-        return res.status(400).json({ message: "Project ID and User ID are required" });
-    }
-
-    const sql = "INSERT INTO project_members (project_id, user_id) VALUES (?, ?)";
-
-    try {
-        await db.query(sql, [projectId, userId]);
-        res.status(201).json({ message: "Member assigned to project successfully" });
-    } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ message: "Member already assigned to this project" });
-        }
-        console.error("ASSIGN MEMBER ERROR 👉", err);
-        res.status(500).json({ message: "Failed to assign member: " + err.message });
+        res.status(500).json({ message: err.message });
     }
 };
 
-/* ================= GET PROJECT MEMBERS ================= */
+/* ================= PROJECT MEMBERS HELPERS ================= */
 exports.getProjectMembers = async (req, res) => {
     const { projectId } = req.params;
-
-    if (!projectId) {
-        return res.status(400).json({ message: "Project ID is required" });
-    }
-
     const sql = `
         SELECT u.id, u.name, u.specialization, u.status 
         FROM users u
         JOIN project_members pm ON u.id = pm.user_id
         WHERE pm.project_id = ?
     `;
-
     try {
         const [results] = await db.query(sql, [projectId]);
         res.json(results);
     } catch (err) {
-        console.error("GET PROJECT MEMBERS ERROR 👉", err);
-        res.status(500).json({ message: "Failed to fetch project members" });
+        res.status(500).json({ message: "Failed to fetch members" });
     }
 };

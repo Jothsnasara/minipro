@@ -9,7 +9,7 @@ const ManagerProjects = () => {
     const navigate = useNavigate();
     const [projects, setProjects] = useState([]);
     const [managerId, setManagerId] = useState(null);
-    const [members, setMembers] = useState([]); // All members (for team assignment)
+    const [members, setMembers] = useState([]); 
     const [teamOpen, setTeamOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
 
@@ -18,19 +18,19 @@ const ManagerProjects = () => {
             const res = await axios.get(`http://localhost:5001/projects/manager/${id}`);
             setProjects(res.data);
         } catch (err) {
-            console.error(err);
+            console.error("Error fetching projects:", err);
         }
     };
 
     const fetchAllMembers = async () => {
-        try {
-            const res = await axios.get('http://localhost:5001/auth/users/members');
-            setMembers(res.data);
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
+    try {
+        // FIXED: Changed from /auth/users/members to /api/users
+        const res = await axios.get('http://localhost:5001/api/users');
+        setMembers(res.data);
+    } catch (err) {
+        console.error("Member Fetch Error:", err);
+    }
+};
 
     useEffect(() => {
         const userStr = localStorage.getItem("user");
@@ -42,24 +42,20 @@ const ManagerProjects = () => {
         }
     }, []);
 
-
     const handleTeamOpen = (project) => {
         setSelectedProject(project);
         setTeamOpen(true);
     };
 
-
     const handleTeamClose = () => {
         setTeamOpen(false);
     };
-
-
 
     return (
         <div className="management-page">
             <header className="management-header">
                 <div className="header-left">
-                    <div onClick={() => navigate('/manager-dashboard')} className="back-statement">
+                    <div onClick={() => navigate('/manager-dashboard')} className="back-statement" style={{cursor: 'pointer'}}>
                         ← Back to Dashboard
                     </div>
                     <h1>Project Management</h1>
@@ -67,7 +63,6 @@ const ManagerProjects = () => {
                 </div>
             </header>
 
-            {/* Detailed Grid for Professional Cards */}
             <div className="detailed-grid">
                 {projects.map(proj => (
                     <div className="figma-detailed-card" key={proj.id || proj.project_id}>
@@ -83,11 +78,12 @@ const ManagerProjects = () => {
                         <div className="card-meta-info">
                             <div className="meta-item">
                                 <span className="meta-icon">📅</span>
-                                <span>{new Date(proj.end_date).toLocaleDateString()}</span>
+                                <span>{proj.end_date ? new Date(proj.end_date).toLocaleDateString() : 'N/A'}</span>
                             </div>
                             <div className="meta-item">
                                 <span className="meta-icon">👥</span>
-                                <span>8 members</span>
+                                {/* FIX: Removed hardcoded "8", now shows actual count from DB if available */}
+                                <span>{proj.member_count || 0} members</span>
                             </div>
                             <div className="meta-item">
                                 <span className="meta-icon">💰</span>
@@ -111,10 +107,7 @@ const ManagerProjects = () => {
 
                         <div className="card-action-btns">
                             {proj.status === 'Active' && (
-                                <button
-                                    className="btn-action tasks"
-                                    onClick={() => console.log('Tasks clicked')}
-                                >
+                                <button className="btn-action tasks" onClick={() => console.log('Tasks clicked')}>
                                     <span className="btn-icon"><Visibility style={{ fontSize: '18px' }} /></span> Tasks & Resources
                                 </button>
                             )}
@@ -126,8 +119,6 @@ const ManagerProjects = () => {
                 ))}
             </div>
 
-
-            {/* Team Management Modal */}
             <Dialog open={teamOpen} onClose={handleTeamClose} fullWidth maxWidth="xs">
                 <DialogTitle>Project Team: {selectedProject?.project_name}</DialogTitle>
                 <DialogContent>
@@ -136,14 +127,16 @@ const ManagerProjects = () => {
                     </p>
                     <div className="member-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {members.map(member => (
-                            <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: '0.5rem', border: '1px solid #eee', borderRadius: '4px' }}>
-                                <span>{member.name} ({member.specialization || 'Generalist'})</span>
+                            <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', border: '1px solid #eee', borderRadius: '4px' }}>
+                                <span>{member.username || member.name} ({member.specialization || 'Generalist'})</span>
                                 <MuiButton size="small" onClick={async () => {
                                     try {
-                                        await axios.post(`http://localhost:5001/projects/${selectedProject.project_id || selectedProject.id}/members`, { userId: member.id });
-                                        alert("Member added to team!");
+                                        const pId = selectedProject.project_id || selectedProject.id;
+                                        await axios.post(`http://localhost:5001/projects/${pId}/members`, { userId: member.id });
+                                        alert("Member added!");
+                                        fetchProjects(managerId); // Refresh count
                                     } catch (err) {
-                                        alert(err.response?.data?.message || "Already in team");
+                                        alert(err.response?.data?.message || "Error adding member");
                                     }
                                 }}>Add</MuiButton>
                             </div>
