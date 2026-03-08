@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import '../Styles/ManagerDashboard.css';
 import logo from '../assets/projectpulse-logo.png'; // Assuming logo exists
@@ -27,7 +26,7 @@ const ManagerLayout = () => {
                     <NavLink to="/manager-dashboard" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>Dashboard</NavLink>
                     <NavLink to="/manager/projects" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>Projects</NavLink>
                     {/* Placeholders for visual fidelity to Figma */}
-                    <div className="menu-item">Progress Monitoring</div>
+                    <NavLink to="/manager/progress" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>Progress Monitoring</NavLink>
                     <div className="menu-item">Reports & Analytics</div>
                     <div className="menu-item">Notifications</div>
                 </nav>

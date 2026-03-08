@@ -1,5 +1,4 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import VerifyOtp from "./components/VerifyOtp";
@@ -8,18 +7,21 @@ import ResetPassword from "./components/ResetPassword";
 
 import Admin from "./components/Admin";
 import AdminDashboard from "./components/AdminDashboard";
-import UserManagement from "./components/UserManagement";
 import Projects from "./components/Projects";
+import UserManagement from "./components/UserManagement";
 
-import Manager from "./components/Manager";
+import ForgotPassword from "./components/ForgotPassword";
 import ManagerDashboard from "./components/ManagerDashboard";
+import ManagerLayout from "./components/ManagerLayout";
+import ManagerProgress from "./components/ManagerProgress";
 import ManagerProjects from "./components/ManagerProjects";
+import MemberDashboard from "./components/MemberDashboard";
+import MemberLayout from "./components/MemberLayout";
+import MemberProgress from "./components/MemberProgress";
+import MemberTasks from "./components/MemberTasks";
 import ProjectForm from "./components/ProjectForm";
 import ProjectTasks from "./components/ProjectTasks";
-import ManagerLayout from "./components/ManagerLayout";
-import Member from "./components/Member";
 import ProtectedRoute from "./components/ProtectedRoute";
-import ForgotPassword from "./components/ForgotPassword";
 
 function App() {
   return (
@@ -60,17 +62,22 @@ function App() {
         <Route path="/manager/create-project" element={<ProjectForm />} />
         <Route path="/manager/activate-project" element={<ProjectForm />} />
         <Route path="/manager/projects/:projectId/tasks" element={<ProjectTasks />} />
+        <Route path="/manager/progress" element={<ManagerProgress />} />
       </Route>
 
       {/* Member routes */}
       <Route
-        path="/member"
         element={
           <ProtectedRoute allowedRole="member">
-            <Member />
+            <MemberLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route path="/member" element={<MemberDashboard />} />
+        <Route path="/member/tasks" element={<MemberTasks />} />
+        <Route path="/member/progress" element={<MemberProgress />} />
+        <Route path="/member/notifications" element={<MemberDashboard />} />
+      </Route>
 
       {/* Redirect unknown routes to login */}
       <Route path="*" element={<Navigate to="/" />} />

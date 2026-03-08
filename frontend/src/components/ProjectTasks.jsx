@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import {
+    FiArrowLeft,
+    FiCheckSquare,
+    FiClock,
+    FiDollarSign,
+    FiPlus,
+    FiUsers
+} from 'react-icons/fi';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import './ProjectTasks.css';
-import { 
-    FiArrowLeft, 
-    FiPlus, 
-    FiCheckSquare, 
-    FiUsers, 
-    FiClock, 
-    FiDollarSign,
-    FiLogOut,
-    FiBell
-} from 'react-icons/fi';
 
 const DEFAULT_MEMBERS = [
     { id: 4, name: 'jithsna', specialization: 'Member' },
@@ -39,11 +37,12 @@ const ProjectTasks = () => {
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    
+
     // Form State
     const [formData, setFormData] = useState({
         task_name: '',
-        memberId: '',
+        description: '',
+        assigned_to: '',
         priority: 'High',
         due_date: '',
         estimated_hours: '',
@@ -56,12 +55,12 @@ const ProjectTasks = () => {
             try {
                 const [taskRes, memberRes, resourceRes] = await Promise.all([
                     api.get(`/projects/${projectId}/tasks`).catch(err => { console.error("Tasks fetch failed", err); return { data: [] }; }),
-                    api.get(`/projects/team-members/all`).catch(err => { console.error("Members fetch failed", err); return { data: [] }; }),
+                    api.get(`/projects/${projectId}/members`).catch(err => { console.error("Members fetch failed", err); return { data: [] }; }),
                     api.get('/projects/resources/all').catch(err => { console.error("Resources fetch failed", err); return { data: [] }; })
                 ]);
 
                 setTasks(taskRes.data || []);
-                
+
                 // Handle Members
                 const fetchedMembers = memberRes.data || [];
                 console.log(`[DEBUG] Received ${fetchedMembers.length} members from server`);
@@ -81,7 +80,7 @@ const ProjectTasks = () => {
                 } else {
                     setAllResources(resources);
                 }
-                
+
                 setLoading(false);
             } catch (err) {
                 console.error("Critical error fetching project data:", err);
@@ -101,10 +100,12 @@ const ProjectTasks = () => {
                 project_id: projectId,
                 ...formData
             });
+            alert("Task assigned successfully!");
             setShowModal(false);
             setFormData({
                 task_name: '',
-                memberId: '',
+                description: '',
+                assigned_to: '',
                 priority: 'High',
                 due_date: '',
                 estimated_hours: '',
@@ -112,22 +113,24 @@ const ProjectTasks = () => {
             });
             // Refresh tasks
             const taskRes = await api.get(`/projects/${projectId}/tasks`);
-            setTasks(taskRes.data);
+            setTasks(taskRes.data || []);
+            navigate('/manager/projects');
         } catch (err) {
             console.error("Error adding task:", err);
-            alert("Failed to add task.");
+            const errMsg = err.response?.data?.message || "Failed to add task.";
+            alert(`Failed: ${errMsg}`);
         }
     };
 
-    const handleResourceChange = (e) => {
-        const options = e.target.options;
-        const selected = [];
-        for (let i = 0; i < options.length; i++) {
-            if (options[i].selected) {
-                selected.push(options[i].value);
+    const handleResourceToggle = (resourceName) => {
+        setFormData(prev => {
+            const current = prev.resources || [];
+            if (current.includes(resourceName)) {
+                return { ...prev, resources: current.filter(r => r !== resourceName) };
+            } else {
+                return { ...prev, resources: [...current, resourceName] };
             }
-        }
-        setFormData({ ...formData, resources: selected });
+        });
     };
 
     const stats = {
@@ -148,19 +151,23 @@ const ProjectTasks = () => {
 
     // Calculate Resource Usage
     const resourceUsage = tasks.reduce((acc, task) => {
-        let resources = [];
-        try {
-            resources = JSON.parse(task.resources || '[]');
-        } catch (e) {
-            resources = task.resources ? task.resources.split(',') : [];
-        }
-        
-        resources.forEach(r => {
-            const trimmed = r.trim();
-            if (trimmed) {
-                acc[trimmed] = (acc[trimmed] || 0) + 1;
+        let resArr = [];
+        if (Array.isArray(task.resources)) {
+            resArr = task.resources;
+        } else if (typeof task.resources === 'string') {
+            try {
+                resArr = JSON.parse(task.resources);
+            } catch (e) {
+                resArr = task.resources.split(',').map(r => r.trim());
             }
-        });
+        }
+
+        if (Array.isArray(resArr)) {
+            resArr.forEach(r => {
+                const trimmed = (r || '').toString().trim();
+                if (trimmed) acc[trimmed] = (acc[trimmed] || 0) + 1;
+            });
+        }
         return acc;
     }, {});
 
@@ -181,19 +188,7 @@ const ProjectTasks = () => {
                     <p className="project-subtitle">Project: Website Redesign</p>
                 </div>
                 <div className="header-right">
-                    <div className="header-actions">
-                        <FiBell className="icon-btn" />
-                        <div className="user-profile">
-                            <div className="avatar">P</div>
-                            <div className="user-info">
-                                <span className="user-name">pm</span>
-                                <span className="user-role">project manager</span>
-                            </div>
-                        </div>
-                        <button className="logout-btn" onClick={() => navigate('/')}>
-                            <FiLogOut /> Logout
-                        </button>
-                    </div>
+
                     <div className="header-buttons">
                         <button className="btn-primary" onClick={() => setShowModal(true)}><FiPlus /> Add Task</button>
                         <button className="btn-secondary"><FiDollarSign /> Cost Tracking</button>
@@ -242,9 +237,11 @@ const ProjectTasks = () => {
                                 <th>Assigned To</th>
                                 <th>Priority</th>
                                 <th>Status</th>
+                                <th>Progress</th>
                                 <th>Due Date</th>
                                 <th>Est. Hours</th>
                                 <th>Resources</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -258,22 +255,58 @@ const ProjectTasks = () => {
                                         </div>
                                     </td>
                                     <td><span className={`priority-pill ${task.priority?.toLowerCase()}`}>{task.priority}</span></td>
-                                    <td><span className={`status-pill-small ${task.status?.toLowerCase().replace(' ', '-')}`}>{task.status}</span></td>
+                                    <td><span className={`status-pill-small ${task.status?.toLowerCase().replace(/\s+/g, '-')}`}>{task.status}</span></td>
+                                    <td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: '#f1f5f9', overflow: 'hidden' }}>
+                                                <div style={{ width: `${task.progress || 0}%`, height: '100%', borderRadius: '3px', background: (task.progress || 0) === 100 ? '#22c55e' : '#3b82f6', transition: 'width 0.3s' }}></div>
+                                            </div>
+                                            <span style={{ fontSize: '12px', color: '#64748b', minWidth: '32px' }}>{task.progress || 0}%</span>
+                                        </div>
+                                    </td>
                                     <td>{new Date(task.due_date).toLocaleDateString()}</td>
                                     <td>{task.estimated_hours}h</td>
                                     <td>
                                         <div className="resource-tags">
                                             {(() => {
-                                                try {
-                                                    const resArr = typeof task.resources === 'string' ? JSON.parse(task.resources) : task.resources;
-                                                    return Array.isArray(resArr) ? resArr.map(r => (
-                                                        <span key={r} className="resource-tag">{r}</span>
-                                                    )) : null;
-                                                } catch (e) {
-                                                    return null;
+                                                let resArr = [];
+                                                if (Array.isArray(task.resources)) {
+                                                    resArr = task.resources;
+                                                } else if (typeof task.resources === 'string') {
+                                                    try {
+                                                        resArr = JSON.parse(task.resources);
+                                                    } catch (e) {
+                                                        resArr = task.resources.split(',').map(r => r.trim());
+                                                    }
                                                 }
+                                                return Array.isArray(resArr) ? resArr.map(r => (
+                                                    <span key={r} className="resource-tag">{r}</span>
+                                                )) : null;
                                             })()}
                                         </div>
+                                    </td>
+                                    <td>
+                                        {task.status === 'Pending Review' ? (
+                                            <button
+                                                className="review-btn"
+                                                onClick={async () => {
+                                                    try {
+                                                        await api.put(`/projects/tasks/${task.task_id}/review`);
+                                                        setTasks(prev => prev.map(t =>
+                                                            t.task_id === task.task_id ? { ...t, status: 'Reviewed' } : t
+                                                        ));
+                                                    } catch (err) {
+                                                        console.error('Failed to review task:', err);
+                                                    }
+                                                }}
+                                            >
+                                                ✓ Mark Reviewed
+                                            </button>
+                                        ) : task.status === 'Reviewed' ? (
+                                            <span style={{ color: '#22c55e', fontWeight: 600, fontSize: '13px' }}>✅ Reviewed</span>
+                                        ) : (
+                                            <span style={{ color: '#94a3b8', fontSize: '13px' }}>—</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -338,21 +371,32 @@ const ProjectTasks = () => {
                         <form onSubmit={handleAddTask} className="task-form">
                             <div className="form-group full-width">
                                 <label>Task Name</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Enter task name" 
+                                <input
+                                    type="text"
+                                    placeholder="Enter task name"
                                     value={formData.task_name}
-                                    onChange={(e) => setFormData({ ...formData, task_name: e.target.value })}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, task_name: e.target.value }))}
                                     required
+                                />
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label>Description (Optional)</label>
+                                <textarea
+                                    placeholder="Brief task description"
+                                    value={formData.description}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                    rows="2"
+                                    style={{ padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '10px', resize: 'vertical' }}
                                 />
                             </div>
 
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Assign To</label>
-                                    <select 
-                                        value={formData.memberId}
-                                        onChange={(e) => setFormData({ ...formData, memberId: e.target.value })}
+                                    <select
+                                        value={formData.assigned_to}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
                                         required
                                     >
                                         <option value="">Select team member</option>
@@ -363,9 +407,9 @@ const ProjectTasks = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Priority</label>
-                                    <select 
+                                    <select
                                         value={formData.priority}
-                                        onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
                                     >
                                         <option value="High">High</option>
                                         <option value="Medium">Medium</option>
@@ -377,21 +421,22 @@ const ProjectTasks = () => {
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Due Date</label>
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         value={formData.due_date}
                                         min={new Date().toISOString().split('T')[0]}
-                                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
                                         required
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Estimated Hours</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="40" 
+                                    <input
+                                        type="number"
+                                        placeholder="40"
                                         value={formData.estimated_hours}
-                                        onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, estimated_hours: e.target.value }))}
+                                        min="1"
                                         required
                                     />
                                 </div>
@@ -399,17 +444,18 @@ const ProjectTasks = () => {
 
                             <div className="form-group full-width">
                                 <label>Resources</label>
-                                <select 
-                                    multiple 
-                                    className="resources-select"
-                                    value={formData.resources}
-                                    onChange={handleResourceChange}
-                                >
+                                <div className="resources-grid">
                                     {allResources.map(r => (
-                                        <option key={r.resource_id} value={r.resource_name}>{r.resource_name}</option>
+                                        <div
+                                            key={r.resource_id}
+                                            className={`resource-option ${(formData.resources || []).includes(r.resource_name) ? 'selected' : ''}`}
+                                            onClick={() => handleResourceToggle(r.resource_name)}
+                                        >
+                                            {r.resource_name}
+                                        </div>
                                     ))}
-                                </select>
-                                <p className="help-text">Hold Ctrl/Cmd to select multiple resources</p>
+                                </div>
+                                <p className="help-text">Click to select multiple resources</p>
                             </div>
 
                             <div className="modal-btns">

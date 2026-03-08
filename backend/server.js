@@ -27,7 +27,7 @@ app.use("/", authRoutes);
 app.get('/api/users', verifyToken, async (req, res) => {
     try {
         // This will now work perfectly once you've run the ALTER TABLE command in MySQL
-        const [rows] = await db.query("SELECT id, username, specialization FROM users WHERE role = 'member'");
+        const [rows] = await db.query("SELECT id, name, username, specialization FROM users WHERE role = 'member' AND resign_date IS NULL");
         res.json(rows);
     } catch (err) {
         console.error("Error in /api/users:", err.message);

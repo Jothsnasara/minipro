@@ -14,6 +14,7 @@ router.post('/:projectId/members', verifyToken, isManager, projectController.add
 router.get("/manager/:managerId", verifyToken, isManager, projectController.getManagerProjects);
 router.get("/manager/:managerId/team-members", verifyToken, isManager, projectController.getManagerTeamMembersCount);
 router.get("/manager/:managerId/unfilled-projects", verifyToken, isManager, projectController.getUnfilledProjects);
+router.get("/manager/:managerId/progress", verifyToken, isManager, projectController.getManagerProgressData);
 
 // --- GLOBAL PROJECT ROUTES ---
 router.get("/", verifyToken, projectController.getAllProjects);
@@ -24,5 +25,11 @@ router.post("/tasks", verifyToken, isManager, projectController.createTask);
 router.put('/complete-project/:id', verifyToken, isManager, projectController.completeProject);
 router.get("/:projectId/members", verifyToken, projectController.getProjectMembers);
 router.get("/:projectId/tasks", verifyToken, projectController.getProjectTasks);
+
+// --- MEMBER DASHBOARD ROUTES ---
+router.get("/member/dashboard/:memberId", verifyToken, projectController.getMemberDashboardData);
+router.get("/member/progress/:memberId", verifyToken, projectController.getMemberProgressData);
+router.put("/tasks/:taskId/progress", verifyToken, projectController.updateTaskProgress);
+router.put("/tasks/:taskId/review", verifyToken, isManager, projectController.reviewTask);
 
 module.exports = router;
