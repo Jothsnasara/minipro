@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
-import '../styles/ManagerDashboard.css';
+import '../Styles/ManagerDashboard.css';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 
@@ -106,11 +106,20 @@ const ManagerProjects = () => {
                         </div>
 
                         <div className="card-action-btns">
-                            {proj.status === 'Active' && (
-                                <button className="btn-action tasks" onClick={() => console.log('Tasks clicked')}>
-                                    <span className="btn-icon"><Visibility style={{ fontSize: '18px' }} /></span> Tasks & Resources
-                                </button>
-                            )}
+                            <button 
+                                className="btn-action tasks" 
+                                onClick={() => {
+                                    const pId = proj.project_id || proj.id;
+                                    console.log("Navigating to project tasks:", pId);
+                                    if (pId) {
+                                        navigate(`/manager/projects/${pId}/tasks`);
+                                    } else {
+                                        console.error("Project ID missing for pagination:", proj);
+                                    }
+                                }}
+                            >
+                                <span className="btn-icon"><Visibility style={{ fontSize: '18px' }} /></span> Tasks & Resources
+                            </button>
                             <button className="btn-action cost" onClick={() => handleTeamOpen(proj)}>
                                 <span className="btn-icon">👥</span> Team
                             </button>

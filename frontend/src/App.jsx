@@ -15,6 +15,7 @@ import Manager from "./components/Manager";
 import ManagerDashboard from "./components/ManagerDashboard";
 import ManagerProjects from "./components/ManagerProjects";
 import ProjectForm from "./components/ProjectForm";
+import ProjectTasks from "./components/ProjectTasks";
 import ManagerLayout from "./components/ManagerLayout";
 import Member from "./components/Member";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -58,6 +59,7 @@ function App() {
         <Route path="/manager/projects" element={<ManagerProjects />} />
         <Route path="/manager/create-project" element={<ProjectForm />} />
         <Route path="/manager/activate-project" element={<ProjectForm />} />
+        <Route path="/manager/projects/:projectId/tasks" element={<ProjectTasks />} />
       </Route>
 
       {/* Member routes */}

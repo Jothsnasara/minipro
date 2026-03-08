@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import '../styles/ManagerDashboard.css';
+import '../Styles/ManagerDashboard.css';
 import logo from '../assets/projectpulse-logo.png'; // Assuming logo exists
 
 const ManagerLayout = () => {

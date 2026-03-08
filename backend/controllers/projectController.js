@@ -143,14 +143,33 @@ exports.getUnfilledProjects = async (req, res) => {
 
 /* ================= CREATE TASK ================= */
 exports.createTask = async (req, res) => {
-    const { project_id, task_name, description, memberId, priority, due_date, resources } = req.body;
-    const sql = `INSERT INTO tasks (project_id, task_name, description, assigned_to, priority, due_date, status, resources) VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?)`;
+    const { project_id, task_name, description, memberId, priority, due_date, estimated_hours, resources } = req.body;
+    const sql = `INSERT INTO tasks (project_id, task_name, description, assigned_to, priority, due_date, status, estimated_hours, resources) VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, ?)`;
     try {
-        const [result] = await db.query(sql, [project_id, task_name, description || '', memberId, priority || 'Medium', due_date, JSON.stringify(resources || [])]);
+        const [result] = await db.query(sql, [project_id, task_name, description || '', memberId, priority || 'Medium', due_date, estimated_hours || 0, JSON.stringify(resources || [])]);
         await db.query("UPDATE users SET status = 'Active' WHERE id = ?", [memberId]);
         res.status(201).json({ message: "Task assigned successfully", taskId: result.insertId });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+/* ================= GET PROJECT TASKS ================= */
+exports.getProjectTasks = async (req, res) => {
+    const { projectId } = req.params;
+    const sql = `
+        SELECT t.*, u.name as assignee_name 
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        WHERE t.project_id = ?
+        ORDER BY t.due_date ASC
+    `;
+    try {
+        const [results] = await db.query(sql, [projectId]);
+        res.json(results);
+    } catch (err) {
+        console.error("GET PROJECT TASKS ERROR:", err);
+        res.status(500).json({ message: "Failed to fetch project tasks" });
     }
 };
 
@@ -168,5 +187,31 @@ exports.getProjectMembers = async (req, res) => {
         res.json(results);
     } catch (err) {
         res.status(500).json({ message: "Failed to fetch members" });
+    }
+};
+
+/* ================= TEAM MEMBERS ================= */
+exports.getAllTeamMembers = async (req, res) => {
+    const sql = "SELECT id, name, specialization FROM users WHERE role = 'member' ORDER BY name ASC";
+    try {
+        const [results] = await db.query(sql);
+        console.log(`[TEAM MEMBERS] Fetched ${results.length} members from database`);
+        res.json(results);
+    } catch (err) {
+        console.error("GET TEAM MEMBERS ERROR:", err);
+        res.status(500).json({ message: "Failed to fetch team members" });
+    }
+};
+
+/* ================= RESOURCES ================= */
+exports.getAllResources = async (req, res) => {
+    const sql = "SELECT * FROM resources ORDER BY resource_name ASC";
+    try {
+        const [results] = await db.query(sql);
+        console.log(`[RESOURCES] Fetched ${results.length} resources from database`);
+        res.json(results);
+    } catch (err) {
+        console.error("GET RESOURCES ERROR:", err);
+        res.status(500).json({ message: "Failed to fetch resources" });
     }
 };
