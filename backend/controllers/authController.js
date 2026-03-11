@@ -89,6 +89,11 @@ exports.login = async (req, res) => {
     const user = rows[0];
     console.log("[LOGIN DEBUG] User found. Status:", user.status, "Role:", user.role);
 
+    // ✅ Block if status is null (meaning the user has been resigned/deleted)
+    if (user.status === null) {
+      return res.status(403).json({ message: "Account is no longer active." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -242,7 +247,7 @@ exports.resignUser = async (req, res) => {
 
 /* ================= GET ALL USERS ================= */
 exports.getManagers = async (req, res) => {
-  const sql = "SELECT id, username, name, status FROM users WHERE role = 'manager'";
+  const sql = "SELECT id, username, name, status FROM users WHERE role = 'manager' AND status IS NOT NULL";
   try {
     const [rows] = await db.query(sql);
     res.json(rows);
@@ -289,30 +294,22 @@ exports.getAllUsers = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
-  const { name, email, username, role, status } = req.body;
+  const { name, email, username } = req.body;
 
   if (!name || !email || !username) {
     return res.status(400).json({ message: "Required fields missing" });
   }
 
-  const safeRole = ["admin", "manager", "member"].includes(role)
-    ? role
-    : "member";
-
-  const safeStatus = ["Active", "Inactive"].includes(status)
-    ? status
-    : "Active";
-
   const sql = `
     UPDATE users
-    SET name = ?, email = ?, username = ?, role = ?, status = ?
+    SET name = ?, email = ?, username = ?
     WHERE id = ?
   `;
 
   try {
     await db.query(
       sql,
-      [name, email, username, safeRole, safeStatus, id]
+      [name, email, username, id]
     );
     res.json({ message: "User updated successfully" });
   } catch (err) {

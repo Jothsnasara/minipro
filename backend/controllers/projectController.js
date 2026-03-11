@@ -22,15 +22,16 @@ exports.getProjectById = async (req, res) => {
 };
 
 exports.createProject = async (req, res) => {
-    const { project_name, description, start_date, end_date, price, manager_id, status } = req.body;
+    const { project_name, description, start_date, end_date, budget, manager_id, status } = req.body;
     try {
         const [result] = await db.query(
-            "INSERT INTO projects (project_name, description, start_date, end_date, price, manager_id, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [project_name, description, start_date, end_date, price, manager_id, status || 'Pending']
+            "INSERT INTO projects (project_name, description, start_date, end_date, budget, manager_id, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [project_name, description || null, start_date || null, end_date || null, budget || null, manager_id, status || 'Planning']
         );
         res.status(201).json({ id: result.insertId, message: "Project created successfully" });
     } catch (err) {
-        res.status(500).json({ message: "Error creating project" });
+        console.error("Failed to create project:", err);
+        res.status(500).json({ message: "Error creating project", error: err.message });
     }
 };
 
@@ -89,6 +90,11 @@ exports.createTask = async (req, res) => {
                 "INSERT IGNORE INTO project_members (project_id, user_id) VALUES (?, ?)",
                 [project_id, final_assignee]
             );
+            // Set member status to Active when a task is assigned
+            await db.query(
+                "UPDATE users SET status = 'Active' WHERE id = ?",
+                [final_assignee]
+            );
         }
 
         res.status(201).json({ task_id: result.insertId, message: "Task created successfully" });
@@ -130,7 +136,7 @@ exports.getAllResources = async (req, res) => {
 
 exports.getAllTeamMembers = async (req, res) => {
     try {
-        const [rows] = await db.query("SELECT id, name, email, role FROM users WHERE role = 'member'");
+        const [rows] = await db.query("SELECT id, name, email, role FROM users WHERE role = 'member' AND status = 'Inactive' AND resign_date IS NULL");
         res.json(rows);
     } catch (err) {
         console.error("GET TEAM MEMBERS ERROR:", err);
@@ -149,7 +155,7 @@ exports.getProjectMembers = async (req, res) => {
                 SELECT u.id, u.name, u.email, u.specialization
                 FROM users u
                 JOIN project_members pm ON u.id = pm.user_id
-                WHERE pm.project_id = ? AND u.resign_date IS NULL
+                WHERE pm.project_id = ? AND u.resign_date IS NULL AND u.status = 'Inactive'
             `, [projectId]);
             members = rows;
         } catch (dbErr) {
@@ -263,6 +269,28 @@ exports.completeProject = async (req, res) => {
     } catch (err) {
         console.error("COMPLETE PROJECT ERROR:", err);
         res.status(500).json({ message: "Error completing project" });
+    }
+};
+
+exports.setupProject = async (req, res) => {
+    const { id } = req.params;
+    const { description, budget, start_date, end_date, selectedMembers } = req.body;
+
+    try {
+        await db.query(
+            "UPDATE projects SET description = ?, budget = ?, start_date = ?, end_date = ?, status = 'On Track' WHERE project_id = ?",
+            [description, budget, start_date, end_date, id]
+        );
+
+        if (selectedMembers && selectedMembers.length > 0) {
+            const values = selectedMembers.map(userId => [id, userId]);
+            await db.query("INSERT IGNORE INTO project_members (project_id, user_id) VALUES ?", [values]);
+        }
+
+        res.json({ message: "Project setup completed successfully" });
+    } catch (err) {
+        console.error("SETUP PROJECT ERROR:", err);
+        res.status(500).json({ message: "Error setting up project" });
     }
 };
 
@@ -617,5 +645,112 @@ exports.getManagerProgressData = async (req, res) => {
     } catch (err) {
         console.error("MANAGER PROGRESS DATA ERROR:", err);
         res.status(500).json({ message: "Failed to fetch manager progress data" });
+    }
+};
+
+/* ================= RESOURCE USAGE & COST TRACKING ================= */
+exports.logResourceUsage = async (req, res) => {
+    const { taskId } = req.params;
+    const { projectId, resourceId, quantity } = req.body;
+    const userId = req.user?.id || null;
+
+    try {
+        const [resources] = await db.query("SELECT resource_type, cost_per_unit FROM resources WHERE resource_id = ?", [resourceId]);
+        if (resources.length === 0) return res.status(404).json({ message: "Resource not found in catalog" });
+
+        const costPerUnit = parseFloat(resources[0].cost_per_unit) || 0;
+        const totalCost = costPerUnit * parseInt(quantity);
+        const category = resources[0].resource_type || "Miscellaneous";
+
+        await db.query(`
+            INSERT INTO costs (project_id, resource_id, quantity, cost_per_unit, total_cost, usage_date, category, task_id, user_id)
+            VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?, ?)
+        `, [projectId, resourceId, quantity, costPerUnit, totalCost, category, taskId, userId]);
+
+        res.json({ message: "Usage logged successfully", totalCost });
+    } catch (err) {
+        console.error("LOG RESOURCE USAGE ERROR:", err);
+        res.status(500).json({ message: "Failed to log resource usage" });
+    }
+};
+
+exports.getProjectCostTracking = async (req, res) => {
+    const { projectId } = req.params;
+
+    try {
+        // Get total budget from projects table
+        const [projRows] = await db.query("SELECT budget FROM projects WHERE project_id = ?", [projectId]);
+        const totalBudget = parseFloat(projRows[0]?.budget) || 0;
+
+        // Total spent
+        const [totalRows] = await db.query("SELECT COALESCE(SUM(total_cost), 0) as total FROM costs WHERE project_id = ?", [projectId]);
+        const totalSpent = parseFloat(totalRows[0].total);
+
+        // Cost grouped by resource
+        const [byResource] = await db.query(`
+            SELECT r.resource_name as label, COALESCE(SUM(c.total_cost), 0) as value
+            FROM costs c
+            LEFT JOIN resources r ON c.resource_id = r.resource_id
+            WHERE c.project_id = ?
+            GROUP BY r.resource_name
+            ORDER BY value DESC
+        `, [projectId]);
+
+        // Cost grouped by team member
+        const [byMember] = await db.query(`
+            SELECT u.name as label, COALESCE(SUM(c.total_cost), 0) as value
+            FROM costs c
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE c.project_id = ?
+            GROUP BY u.name
+            ORDER BY value DESC
+        `, [projectId]);
+
+        // Cost grouped by task
+        const [byTask] = await db.query(`
+            SELECT t.task_name as label, COALESCE(SUM(c.total_cost), 0) as value
+            FROM costs c
+            LEFT JOIN tasks t ON c.task_id = t.task_id
+            WHERE c.project_id = ?
+            GROUP BY t.task_name
+            ORDER BY value DESC
+        `, [projectId]);
+
+        // Monthly actual spending
+        const [monthly] = await db.query(`
+            SELECT DATE_FORMAT(usage_date, '%b') as monthStr, MONTH(usage_date) as monthNum, SUM(total_cost) as total
+            FROM costs
+            WHERE project_id = ?
+            GROUP BY monthStr, monthNum
+            ORDER BY monthNum
+        `, [projectId]);
+
+        // Raw cost log for the table
+        const [rawCosts] = await db.query(`
+            SELECT c.*, r.resource_name, u.name as member_name, t.task_name
+            FROM costs c
+            LEFT JOIN resources r ON c.resource_id = r.resource_id
+            LEFT JOIN users u ON c.user_id = u.id
+            LEFT JOIN tasks t ON c.task_id = t.task_id
+            WHERE c.project_id = ?
+            ORDER BY c.created_at DESC
+        `, [projectId]);
+
+        res.json({
+            totals: {
+                budgeted: totalBudget,
+                spent: totalSpent,
+                remaining: totalBudget - totalSpent,
+                variance: totalBudget - totalSpent
+            },
+            byResource,
+            byMember,
+            byTask,
+            monthlyCosts: monthly,
+            rawCosts
+        });
+    } catch (err) {
+        console.error("GET PROJECT COST TRACKING ERROR:", err);
+        res.status(500).json({ message: "Failed to fetch project cost tracking data" });
     }
 };

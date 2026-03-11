@@ -127,7 +127,7 @@ export default function UserManagement() {
         <StatCard
           icon={<People sx={{ color: "#F59E0B" }} />}
           label="Project Managers"
-          value={users.filter(u => u.role === "manager").length}
+          value={users.filter(u => u.role === "manager" && u.status === "Active").length}
           bg="#FFEDD5"
         />
       </Box>

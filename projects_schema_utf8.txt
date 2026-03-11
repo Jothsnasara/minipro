@@ -1,0 +1,9 @@
+﻿Field	Type	Null	Key	Default	Extra
+project_id	int	NO	PRI	NULL	auto_increment
+project_name	varchar(255)	NO		NULL	
+description	text	YES		NULL	
+budget	decimal(15,2)	YES		NULL	
+start_date	date	YES		NULL	
+end_date	date	YES		NULL	
+manager_id	int	YES	MUL	NULL	
+status	varchar(50)	YES		Planning	

@@ -138,6 +138,12 @@ const ManagerProjects = () => {
                             <button className="btn-action cost" onClick={() => handleTeamOpen(proj)}>
                                 <span className="btn-icon">👥</span> Team
                             </button>
+                            <button className="btn-action tasks" style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }} onClick={() => {
+                                const pId = proj.project_id || proj.id;
+                                if (pId) navigate(`/manager/projects/${pId}/cost-tracking`);
+                            }}>
+                                <span className="btn-icon">💰</span> Cost Tracking
+                            </button>
                         </div>
                     </div>
                 ))}

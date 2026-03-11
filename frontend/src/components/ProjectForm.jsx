@@ -45,13 +45,12 @@ const ProjectForm = () => {
         // 3. Fetch available members from Port 5001
         const fetchMembers = async () => {
             try {
-                // Changed from 5000 to 5001 to match your server log
-                const res = await api.get(`/api/users`);
+                // Fetch specifically inactive team members instead of all users
+                const res = await api.get(`/projects/team-members/all`);
                 console.log("Team members loaded:", res.data);
                 setAvailableMembers(res.data);
             } catch (err) {
                 console.error("Error fetching members:", err);
-                // Hint: If this still fails, make sure app.get('/api/users') is in server.js
             }
         };
         fetchMembers();
@@ -92,7 +91,7 @@ const ProjectForm = () => {
 
         try {
             // Update project details + send member IDs to the backend on Port 5001
-            await api.put(`/projects/complete-project/${formData.project_id}`, formData);
+            await api.put(`/projects/setup/${formData.project_id}`, formData);
             alert("Project Setup Completed & Team Assigned!");
             navigate('/manager-dashboard');
         } catch (err) {

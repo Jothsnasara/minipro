@@ -1,0 +1,44 @@
+﻿Tables_in_minipro
+costs
+project_members
+project_resource_allocations
+projects
+resource_allocations
+resources
+tasks
+users
+Field	Type	Null	Key	Default	Extra
+resource_id	int	NO	PRI	NULL	auto_increment
+resource_name	varchar(100)	NO		NULL	
+resource_type	varchar(50)	YES		NULL	
+cost_per_unit	decimal(10,2)	YES		NULL	
+Field	Type	Null	Key	Default	Extra
+cost_id	int	NO	PRI	NULL	auto_increment
+project_id	int	NO	MUL	NULL	
+resource_id	int	NO	MUL	NULL	
+quantity	int	NO		NULL	
+cost_per_unit	decimal(15,2)	NO		NULL	
+total_cost	decimal(15,2)	NO		NULL	
+usage_date	date	NO		NULL	
+category	varchar(50)	YES		General	
+created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+task_id	int	YES		NULL	
+user_id	int	YES	MUL	NULL	
+Field	Type	Null	Key	Default	Extra
+allocation_id	int	NO	PRI	NULL	auto_increment
+project_id	int	NO	MUL	NULL	
+resource_id	int	NO	MUL	NULL	
+allocated_units	int	NO		NULL	
+created_at	timestamp	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+Field	Type	Null	Key	Default	Extra
+task_id	int	NO	PRI	NULL	auto_increment
+project_id	int	NO	MUL	NULL	
+task_name	varchar(255)	NO		NULL	
+description	text	YES		NULL	
+assigned_to	int	NO	MUL	NULL	
+priority	enum('High','Medium','Low')	YES		Medium	
+status	enum('Todo','In Progress','Completed','Pending','Pending Review','Reviewed')	YES		Todo	
+due_date	date	YES		NULL	
+estimated_hours	int	YES		0	
+resources	json	YES		NULL	
+progress	int	YES		0	

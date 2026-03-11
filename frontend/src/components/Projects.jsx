@@ -27,7 +27,7 @@ const Projects = () => {
         { title: 'Total Projects', value: projects.length, icon: <Folder />, color: '#3b82f6', bgColor: '#eff6ff' },
         { title: 'On Track', value: projects.filter(p => p.status === 'On Track').length, icon: <CheckCircle />, color: '#10b981', bgColor: '#ecfdf5' },
         { title: 'Total Budget', value: `₹${(projects.reduce((acc, curr) => acc + Number(curr.budget || 0), 0) / 1000).toFixed(0)}K`, icon: <AttachMoney />, color: '#f59e0b', bgColor: '#fffbeb' },
-        { title: 'Team Members', value: users.filter(u => u.status && (u.status === 'Active' || u.status === 'Inactive')).length, icon: <Groups />, color: '#8b5cf6', bgColor: '#f5f3ff' },
+        { title: 'Total Users', value: users.filter(u => u.status && (u.status === 'Active' || u.status === 'Inactive')).length, icon: <Groups />, color: '#8b5cf6', bgColor: '#f5f3ff' },
     ];
 
     const [fetchError, setFetchError] = useState(null);
@@ -161,8 +161,11 @@ const Projects = () => {
             <div className="detailed-grid">
                 {projects.map((project, index) => {
                     const progress = Math.floor(Math.random() * 100);
-                    // const budgetUsage = Math.floor(Math.random() * 100);
-                    const members = Math.floor(Math.random() * 15) + 5;
+                    // Map manager name from the users list we already have
+                    const manager = users.find(u => u.id === project.manager_id);
+                    const managerName = manager ? manager.name : (project.manager_name || 'Unassigned');
+
+                    const members = project.member_count || 0;
                     const statusClass = getStatusClass(project.status);
 
                     return (
@@ -178,7 +181,7 @@ const Projects = () => {
 
                             <div className="card-meta-info">
                                 <div className="meta-item">
-                                    <span>📅</span> {dayjs(project.end_date).format('DD/MM/YYYY')}
+                                    <span>📅</span> {project.end_date ? dayjs(project.end_date).format('DD/MM/YYYY') : 'Not Set'}
                                 </div>
                                 <div className="meta-item">
                                     <span>👥</span> {members} members
@@ -187,7 +190,7 @@ const Projects = () => {
                                     <span>💲</span> {formatCurrency(project.budget)}
                                 </div>
                                 <div className="meta-item">
-                                    <span>PM:</span> {project.manager_name || 'Unassigned'}
+                                    <span>PM:</span> {managerName}
                                 </div>
                             </div>
 
@@ -202,11 +205,12 @@ const Projects = () => {
                             </div>
 
                             <div className="card-action-btns">
-                                <button className="btn-action tasks">
-                                    <span>👁</span> Tasks & Resources
-                                </button>
-                                <button className="btn-action cost">
-                                    <span>💲</span> Cost Tracking
+                                <button
+                                    className="btn-action tasks"
+                                    style={{ width: '100%' }}
+                                    onClick={() => navigate(`/admin/projects/${project.project_id || project.id}/cost-tracking`)}
+                                >
+                                    <span>�</span> Resource Usage
                                 </button>
                             </div>
                         </div>

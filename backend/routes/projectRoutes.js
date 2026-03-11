@@ -22,14 +22,17 @@ router.post("/", verifyToken, isAdmin, projectController.createProject);
 router.post("/tasks", verifyToken, isManager, projectController.createTask);
 
 // --- ACTION ROUTES ---
+router.put('/setup/:id', verifyToken, isManager, projectController.setupProject);
 router.put('/complete-project/:id', verifyToken, isManager, projectController.completeProject);
 router.get("/:projectId/members", verifyToken, projectController.getProjectMembers);
 router.get("/:projectId/tasks", verifyToken, projectController.getProjectTasks);
+router.get("/:projectId/cost-tracking", verifyToken, isManager, projectController.getProjectCostTracking);
 
 // --- MEMBER DASHBOARD ROUTES ---
 router.get("/member/dashboard/:memberId", verifyToken, projectController.getMemberDashboardData);
 router.get("/member/progress/:memberId", verifyToken, projectController.getMemberProgressData);
 router.put("/tasks/:taskId/progress", verifyToken, projectController.updateTaskProgress);
 router.put("/tasks/:taskId/review", verifyToken, isManager, projectController.reviewTask);
+router.post("/tasks/:taskId/resource-usage", verifyToken, projectController.logResourceUsage);
 
 module.exports = router;

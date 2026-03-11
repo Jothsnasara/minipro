@@ -221,6 +221,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 10px;
     background-color: #f8fafc;
+    color: #0f172a; /* Explicitly set text color to dark/black */
     transition: border-color 0.2s;
     font-family: inherit;
 }

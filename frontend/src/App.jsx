@@ -15,6 +15,7 @@ import ManagerDashboard from "./components/ManagerDashboard";
 import ManagerLayout from "./components/ManagerLayout";
 import ManagerProgress from "./components/ManagerProgress";
 import ManagerProjects from "./components/ManagerProjects";
+import ManagerCostTracking from "./components/ManagerCostTracking";
 import MemberDashboard from "./components/MemberDashboard";
 import MemberLayout from "./components/MemberLayout";
 import MemberProgress from "./components/MemberProgress";
@@ -44,6 +45,7 @@ function App() {
         <Route index element={<AdminDashboard />} /> {/* Default /admin */}
         <Route path="users" element={<UserManagement />} /> {/* /admin/users */}
         <Route path="projects" element={<Projects />} /> {/* /admin/projects */}
+        <Route path="projects/:projectId/cost-tracking" element={<ManagerCostTracking />} />
         <Route path="register" element={<Register />} /> {/* /admin/register */}
       </Route>
 
@@ -62,6 +64,7 @@ function App() {
         <Route path="/manager/create-project" element={<ProjectForm />} />
         <Route path="/manager/activate-project" element={<ProjectForm />} />
         <Route path="/manager/projects/:projectId/tasks" element={<ProjectTasks />} />
+        <Route path="/manager/projects/:projectId/cost-tracking" element={<ManagerCostTracking />} />
         <Route path="/manager/progress" element={<ManagerProgress />} />
       </Route>
 

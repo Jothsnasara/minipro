@@ -11,12 +11,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import './ProjectTasks.css';
 
-const DEFAULT_MEMBERS = [
-    { id: 4, name: 'jithsna', specialization: 'Member' },
-    { id: 12, name: 'rahul', specialization: 'Member' },
-    { id: 14, name: 'zarah', specialization: 'Member' },
-    { id: 15, name: 'leo', specialization: 'Member' }
-];
 
 const DEFAULT_RESOURCES = [
     { resource_id: 'd1', resource_name: 'Figma' },
@@ -53,22 +47,23 @@ const ProjectTasks = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [taskRes, memberRes, resourceRes] = await Promise.all([
+                // Handle Members — fetch all from users table directly
+                const [taskRes, memberRes, resourceRes, allMemberRes] = await Promise.all([
                     api.get(`/projects/${projectId}/tasks`).catch(err => { console.error("Tasks fetch failed", err); return { data: [] }; }),
                     api.get(`/projects/${projectId}/members`).catch(err => { console.error("Members fetch failed", err); return { data: [] }; }),
-                    api.get('/projects/resources/all').catch(err => { console.error("Resources fetch failed", err); return { data: [] }; })
+                    api.get('/projects/resources/all').catch(err => { console.error("Resources fetch failed", err); return { data: [] }; }),
+                    api.get('/projects/team-members/all').catch(err => { console.error("All members fetch failed", err); return { data: [] }; })
                 ]);
 
                 setTasks(taskRes.data || []);
 
-                // Handle Members
+                // Favor assigned members from project_members table, fallback to all users
                 const fetchedMembers = memberRes.data || [];
-                console.log(`[DEBUG] Received ${fetchedMembers.length} members from server`);
-                if (fetchedMembers.length === 0) {
-                    console.warn("[DEBUG] No members from DB, using fallback");
-                    setMembers(DEFAULT_MEMBERS);
-                } else {
+                const allMembers = allMemberRes.data || [];
+                if (fetchedMembers.length > 0) {
                     setMembers(fetchedMembers);
+                } else {
+                    setMembers(allMembers);
                 }
 
                 // Handle Resources
@@ -84,7 +79,6 @@ const ProjectTasks = () => {
                 setLoading(false);
             } catch (err) {
                 console.error("Critical error fetching project data:", err);
-                setMembers(DEFAULT_MEMBERS);
                 setAllResources(DEFAULT_RESOURCES);
                 setLoading(false);
             }
