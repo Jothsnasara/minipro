@@ -18,6 +18,7 @@ router.get("/manager/:managerId/progress", verifyToken, isManager, projectContro
 
 // --- GLOBAL PROJECT ROUTES ---
 router.get("/", verifyToken, projectController.getAllProjects);
+router.get("/tasks/all", verifyToken, projectController.getAllTasks);
 router.post("/", verifyToken, isAdmin, projectController.createProject);
 router.post("/tasks", verifyToken, isManager, projectController.createTask);
 

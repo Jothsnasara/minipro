@@ -9,7 +9,7 @@ const ProjectForm = () => {
     const { project_id, project_name } = location.state || {};
 
     // Configuration: Centralize the backend URL to make changes easier
-    const BACKEND_URL = "http://localhost:5001";
+    const BACKEND_URL = "http://localhost:5005";
 
     const [formData, setFormData] = useState({
         project_id: project_id || '',

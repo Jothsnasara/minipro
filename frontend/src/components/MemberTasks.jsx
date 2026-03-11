@@ -243,10 +243,21 @@ const MemberTasks = () => {
                                             onChange={(e) => handleResourceUsageChange(task.task_id, 'resourceId', e.target.value)}
                                             style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                                         >
-                                            <option value="">-- Choose --</option>
-                                            {allResources.map(r => (
-                                                <option key={r.resource_id} value={r.resource_id}>{r.resource_name}</option>
-                                            ))}
+                                            <option value="">-- Choose Assigned --</option>
+                                            {allResources
+                                                .filter(r => {
+                                                    // task.resources is stored as a JSON array of names
+                                                    let assignedNames = [];
+                                                    try {
+                                                        assignedNames = typeof task.resources === 'string'
+                                                            ? JSON.parse(task.resources)
+                                                            : (task.resources || []);
+                                                    } catch (e) { assignedNames = []; }
+                                                    return assignedNames.includes(r.resource_name);
+                                                })
+                                                .map(r => (
+                                                    <option key={r.resource_id} value={r.resource_id}>{r.resource_name}</option>
+                                                ))}
                                         </select>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>

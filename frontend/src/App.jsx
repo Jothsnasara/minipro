@@ -79,7 +79,7 @@ function App() {
         <Route path="/member" element={<MemberDashboard />} />
         <Route path="/member/tasks" element={<MemberTasks />} />
         <Route path="/member/progress" element={<MemberProgress />} />
-        <Route path="/member/notifications" element={<MemberDashboard />} />
+      
       </Route>
 
       {/* Redirect unknown routes to login */}

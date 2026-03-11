@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [activities, setActivities] = useState([]);
   const navigate = useNavigate();
 
@@ -25,14 +26,16 @@ export default function AdminDashboard() {
     try {
       const usersRes = await api.get("/users");
       const projectsRes = await api.get("/projects");
+      const tasksRes = await api.get("/projects/tasks/all");
       setUsers(usersRes.data || []);
       setProjects(projectsRes.data || []);
+      setTasks(tasksRes.data || []);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
     }
   };
 
-  const allocatedMembers = users.filter(u => u.role === "member" && u.status === "Active").length;
+  const totalUsers = users.filter(u => u.status === "Active" || u.status === "Inactive").length;
   const activeProjects = projects.filter(p => ['Planning', 'In Progress', 'On Track', 'At Risk', 'Delayed'].includes(p.status)).length;
   const totalBudget = projects
     .filter(p => p.status !== 'Planning' && p.status !== 'Pending')
@@ -61,7 +64,12 @@ export default function AdminDashboard() {
         date: pDate ? new Date(pDate) : new Date(0),
         timeAgo: pDate ? dayjs(pDate).fromNow() : 'Previously'
       }
-    })
+    }),
+    ...tasks.map(t => ({
+      description: `Task "${t.task_name}" assigned to ${t.assignee_name || '...'}`,
+      date: new Date(), // Display as recent
+      timeAgo: 'Recently'
+    }))
   ]
     .filter(a => a.date.getTime() > 0)
     .sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -80,8 +88,8 @@ export default function AdminDashboard() {
         <Card sx={{ flex: 1, minWidth: 150, p: 2 }}>
           <CardContent>
             <People sx={{ color: "#2563EB" }} />
-            <Typography variant="h6" sx={{ color: "#000", mt: 1 }}>{allocatedMembers}</Typography>
-            <Typography variant="body2" sx={{ color: "#000" }}>Allocated Members</Typography>
+            <Typography variant="h6" sx={{ color: "#000", mt: 1 }}>{totalUsers}</Typography>
+            <Typography variant="body2" sx={{ color: "#000" }}>Total Users</Typography>
           </CardContent>
         </Card>
 

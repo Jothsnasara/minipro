@@ -185,7 +185,9 @@ const ProjectTasks = () => {
 
                     <div className="header-buttons">
                         <button className="btn-primary" onClick={() => setShowModal(true)}><FiPlus /> Add Task</button>
-                        <button className="btn-secondary"><FiDollarSign /> Cost Tracking</button>
+                        <button className="btn-secondary" onClick={() => navigate(`/manager/projects/${projectId}/cost-tracking`)}>
+                            <FiDollarSign /> Cost Tracking
+                        </button>
                     </div>
                 </div>
             </header>

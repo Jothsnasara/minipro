@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { FiPlus, FiDollarSign } from 'react-icons/fi';
 import '../styles/ManagerDashboard.css';
 
 const ManagerDashboard = () => {
@@ -11,6 +12,19 @@ const ManagerDashboard = () => {
     });
     const [managerId, setManagerId] = useState(null);
     const [teamMemberCount, setTeamMemberCount] = useState(0);
+    const [showTaskModal, setShowTaskModal] = useState(false);
+    const [taskMembers, setTaskMembers] = useState([]);
+    const [allResources, setAllResources] = useState([]);
+    const [taskFormData, setTaskFormData] = useState({
+        project_id: '',
+        task_name: '',
+        description: '',
+        assigned_to: '',
+        priority: 'High',
+        due_date: '',
+        estimated_hours: '',
+        resources: []
+    });
 
     const fetchProjects = async (id) => {
         try {
@@ -20,10 +34,65 @@ const ManagerDashboard = () => {
 
             // Fetch team members count
             const teamRes = await api.get(`/projects/manager/${id}/team-members`);
-            setTeamMemberCount(teamRes.data.team_count);
+            setTeamMemberCount(teamRes.data.member_count || 0);
+
+            // Fetch resources for the modal
+            const resRes = await api.get('/projects/resources/all');
+            setAllResources(resRes.data || []);
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
         }
+    };
+
+    // Effect to fetch members when project selection changes in modal
+    useEffect(() => {
+        const fetchProjectMembers = async () => {
+            if (taskFormData.project_id) {
+                try {
+                    const res = await api.get(`/projects/${taskFormData.project_id}/members`);
+                    setTaskMembers(res.data || []);
+                } catch (err) {
+                    console.error("Error fetching project members:", err);
+                }
+            } else {
+                setTaskMembers([]);
+            }
+        };
+        fetchProjectMembers();
+    }, [taskFormData.project_id]);
+
+    const handleAddTask = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/projects/tasks', taskFormData);
+            alert("Task assigned successfully!");
+            setShowTaskModal(false);
+            setTaskFormData({
+                project_id: '',
+                task_name: '',
+                description: '',
+                assigned_to: '',
+                priority: 'High',
+                due_date: '',
+                estimated_hours: '',
+                resources: []
+            });
+            if (managerId) fetchProjects(managerId);
+        } catch (err) {
+            console.error("Error adding task:", err);
+            alert("Failed to add task.");
+        }
+    };
+
+    const handleResourceToggle = (resourceName) => {
+        setTaskFormData(prev => {
+            const current = prev.resources || [];
+            if (current.includes(resourceName)) {
+                return { ...prev, resources: current.filter(r => r !== resourceName) };
+            } else {
+                return { ...prev, resources: [...current, resourceName] };
+            }
+        });
     };
 
     useEffect(() => {
@@ -144,8 +213,8 @@ const ManagerDashboard = () => {
                                 <>
                                     <div className="card-details">
                                         <div className="detail-item"><span>Progress</span><strong>{getProgress(proj.status)}%</strong></div>
+                                        <div className="detail-item"><span>Members</span><strong>{proj.member_count || 0}</strong></div>
                                         <div className="detail-item"><span>Deadline</span><strong>{new Date(proj.end_date).toLocaleDateString()}</strong></div>
-                                        <div className="detail-item"><span>Budget Used</span><strong className={proj.budget > 500000 ? 'text-red' : ''}>40%</strong></div>
                                     </div>
                                     <div className="card-progress-bar"><div className="progress-fill" style={{ width: `${getProgress(proj.status)}%` }}></div></div>
                                 </>
@@ -160,7 +229,9 @@ const ManagerDashboard = () => {
                     <div className="actions-panel-card">
                         <h4>Quick Actions</h4>
                         <div className="action-buttons-grid">
-                            <button className="action-button green-theme"><span className="btn-icon">✅</span><span>Assign Task</span></button>
+                            <button className="action-button green-theme" onClick={() => setShowTaskModal(true)}>
+                                <span className="btn-icon">✅</span><span>Assign Task</span>
+                            </button>
                         </div>
                     </div>
 
@@ -206,6 +277,125 @@ const ManagerDashboard = () => {
                             <button className="modal-btn-cancel" onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}>Cancel</button>
                             <button className="modal-btn-confirm" onClick={handleModalAction}>Delete Project</button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {showTaskModal && (
+                <div className="modal-overlay">
+                    <div className="task-modal-card">
+                        <h2>Add New Task</h2>
+                        <form onSubmit={handleAddTask} className="task-form">
+                            <div className="form-group full-width">
+                                <label>Project</label>
+                                <select
+                                    value={taskFormData.project_id}
+                                    onChange={(e) => setTaskFormData(prev => ({ ...prev, project_id: e.target.value }))}
+                                    required
+                                >
+                                    <option value="">Select project</option>
+                                    {projects.map(p => (
+                                        <option key={p.project_id || p.id} value={p.project_id || p.id}>
+                                            {p.project_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label>Task Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter task name"
+                                    value={taskFormData.task_name}
+                                    onChange={(e) => setTaskFormData(prev => ({ ...prev, task_name: e.target.value }))}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label>Description (Optional)</label>
+                                <textarea
+                                    placeholder="Brief task description"
+                                    value={taskFormData.description}
+                                    onChange={(e) => setTaskFormData(prev => ({ ...prev, description: e.target.value }))}
+                                    rows="2"
+                                    style={{ padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '10px', resize: 'vertical' }}
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Assign To</label>
+                                    <select
+                                        value={taskFormData.assigned_to}
+                                        onChange={(e) => setTaskFormData(prev => ({ ...prev, assigned_to: e.target.value }))}
+                                        required
+                                        disabled={!taskFormData.project_id}
+                                    >
+                                        <option value="">{taskFormData.project_id ? "Select team member" : "Select project first"}</option>
+                                        {taskMembers.map(m => (
+                                            <option key={m.id} value={m.id}>{m.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Priority</label>
+                                    <select
+                                        value={taskFormData.priority}
+                                        onChange={(e) => setTaskFormData(prev => ({ ...prev, priority: e.target.value }))}
+                                    >
+                                        <option value="High">High</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Due Date</label>
+                                    <input
+                                        type="date"
+                                        value={taskFormData.due_date}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={(e) => setTaskFormData(prev => ({ ...prev, due_date: e.target.value }))}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Estimated Hours</label>
+                                    <input
+                                        type="number"
+                                        placeholder="40"
+                                        value={taskFormData.estimated_hours}
+                                        onChange={(e) => setTaskFormData(prev => ({ ...prev, estimated_hours: e.target.value }))}
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label>Resources</label>
+                                <div className="resources-grid">
+                                    {allResources.map(r => (
+                                        <div
+                                            key={r.resource_id}
+                                            className={`resource-option ${(taskFormData.resources || []).includes(r.resource_name) ? 'selected' : ''}`}
+                                            onClick={() => handleResourceToggle(r.resource_name)}
+                                        >
+                                            {r.resource_name}
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="help-text">Click to select multiple resources</p>
+                            </div>
+
+                            <div className="modal-btns">
+                                <button type="button" className="cancel-btn-modal" onClick={() => setShowTaskModal(false)}>Cancel</button>
+                                <button type="submit" className="submit-btn-modal">Add Task</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

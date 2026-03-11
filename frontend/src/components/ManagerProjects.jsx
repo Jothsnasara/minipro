@@ -1,7 +1,8 @@
 import Visibility from '@mui/icons-material/Visibility';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button as MuiButton } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button as MuiButton, Divider } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import api from '../services/api';
 import '../Styles/ManagerDashboard.css';
 
@@ -92,21 +93,16 @@ const ManagerProjects = () => {
 
                         <div className="card-meta-info">
                             <div className="meta-item">
-                                <span className="meta-icon">📅</span>
-                                <span>{proj.end_date ? new Date(proj.end_date).toLocaleDateString() : 'N/A'}</span>
+                                <span>📅</span> {proj.end_date ? dayjs(proj.end_date).format('DD/MM/YYYY') : 'Not Set'}
                             </div>
                             <div className="meta-item">
-                                <span className="meta-icon">👥</span>
-                                {/* FIX: Removed hardcoded "8", now shows actual count from DB if available */}
-                                <span>{proj.member_count || 0} members</span>
+                                <span>👥</span> {proj.member_count || 0} members
                             </div>
                             <div className="meta-item">
-                                <span className="meta-icon">💰</span>
-                                <span>₹{(proj.budget / 1000).toFixed(0)}K</span>
+                                <span>💲</span> {proj.budget ? `₹${(proj.budget / 1000).toFixed(0)}K` : '₹0K'}
                             </div>
                             <div className="meta-item">
-                                <strong>PM:</strong>
-                                <span>{proj.manager_name}</span>
+                                <span>PM:</span> {proj.manager_name || 'Unassigned'}
                             </div>
                         </div>
 
@@ -125,12 +121,7 @@ const ManagerProjects = () => {
                                 className="btn-action tasks"
                                 onClick={() => {
                                     const pId = proj.project_id || proj.id;
-                                    console.log("Navigating to project tasks:", pId);
-                                    if (pId) {
-                                        navigate(`/manager/projects/${pId}/tasks`);
-                                    } else {
-                                        console.error("Project ID missing for pagination:", proj);
-                                    }
+                                    if (pId) navigate(`/manager/projects/${pId}/tasks`);
                                 }}
                             >
                                 <span className="btn-icon"><Visibility style={{ fontSize: '18px' }} /></span> Tasks & Resources
@@ -162,25 +153,25 @@ const ManagerProjects = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {/* Current Team Section */}
                             <div>
-                                <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    Current Team ({projectMembers.length})
+                                <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    ✅ Members Added to Project ({projectMembers.length})
                                 </h4>
                                 {projectMembers.length === 0 ? (
-                                    <p style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>No members assigned yet.</p>
+                                    <p style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', paddingLeft: '8px' }}>No members assigned yet.</p>
                                 ) : (
                                     <div className="member-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                         {projectMembers.map(member => (
-                                            <div key={`current-${member.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '6px', background: '#f8fafc' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600 }}>
-                                                        {(member.name || member.username)?.[0] || '?'}
+                                            <div key={`current-${member.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem', border: '1px solid #dbeafe', borderRadius: '8px', background: '#f0f9ff' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>
+                                                        {(member.name || member.username)?.[0]?.toUpperCase() || '?'}
                                                     </div>
-                                                    <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 500 }}>
+                                                    <span style={{ fontSize: '0.9rem', color: '#1e3a8a', fontWeight: 600 }}>
                                                         {member.name || member.username}
                                                     </span>
                                                 </div>
-                                                <span style={{ fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '2px 8px', borderRadius: '12px' }}>
-                                                    {member.specialization || 'Generalist'}
+                                                <span style={{ fontSize: '0.75rem', color: '#2563eb', background: '#dbeafe', padding: '2px 10px', borderRadius: '12px', fontWeight: 500 }}>
+                                                    In Project
                                                 </span>
                                             </div>
                                         ))}
@@ -188,22 +179,33 @@ const ManagerProjects = () => {
                                 )}
                             </div>
 
+                            <Divider />
+
                             {/* Add Members Section */}
                             <div>
-                                <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#334155' }}>Available Members</h4>
-                                <div className="member-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', paddingRight: '4px' }}>
+                                <h4 style={{ fontSize: '0.9rem', marginBottom: '0.8rem', color: '#475569' }}>Remaining Members Pool</h4>
+                                <div className="member-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
                                     {members
                                         .filter(m => !projectMembers.some(pm => pm.id === m.id))
                                         .map(member => (
-                                            <div key={`avail-${member.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', border: '1px solid #eee', borderRadius: '6px' }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontSize: '0.9rem', color: '#334155' }}>{member.name || member.username}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{member.specialization || 'Generalist'}</span>
+                                            <div key={`avail-${member.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem', border: '1px solid #e2e8f0', borderRadius: '8px', transition: 'all 0.2s' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: member.status === 'Active' ? '#f59e0b' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>
+                                                        {(member.name || member.username)?.[0]?.toUpperCase() || '?'}
+                                                    </div>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 500 }}>
+                                                            {member.name || member.username}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.7rem', color: member.status === 'Active' ? '#d97706' : '#64748b' }}>
+                                                            {member.status === 'Active' ? 'Allocated to other projects' : 'Available (Not in any project)'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <MuiButton
                                                     size="small"
-                                                    variant="outlined"
-                                                    style={{ textTransform: 'none', borderRadius: '6px' }}
+                                                    variant="contained"
+                                                    style={{ textTransform: 'none', borderRadius: '6px', backgroundColor: '#2563eb', boxShadow: 'none' }}
                                                     onClick={async () => {
                                                         try {
                                                             const pId = selectedProject.project_id || selectedProject.id;
@@ -222,7 +224,7 @@ const ManagerProjects = () => {
                                             </div>
                                         ))}
                                     {members.filter(m => !projectMembers.some(pm => pm.id === m.id)).length === 0 && (
-                                        <p style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>All available members are already in the team.</p>
+                                        <p style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>No other members available.</p>
                                     )}
                                 </div>
                             </div>
@@ -232,8 +234,8 @@ const ManagerProjects = () => {
                 <DialogActions>
                     <MuiButton onClick={handleTeamClose}>Close</MuiButton>
                 </DialogActions>
-            </Dialog>
-        </div>
+            </Dialog >
+        </div >
     );
 };
 

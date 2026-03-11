@@ -3,7 +3,15 @@ const db = require("../config/db");
 /* ================= PROJECTS ================= */
 exports.getAllProjects = async (req, res) => {
     try {
-        const [rows] = await db.query("SELECT * FROM projects");
+        const query = `
+            SELECT 
+                p.*, 
+                u.name AS manager_name,
+                (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) AS member_count
+            FROM projects p
+            LEFT JOIN users u ON p.manager_id = u.id
+        `;
+        const [rows] = await db.query(query);
         res.json(rows);
     } catch (err) {
         res.status(500).json({ message: "Error fetching projects" });
@@ -28,6 +36,13 @@ exports.createProject = async (req, res) => {
             "INSERT INTO projects (project_name, description, start_date, end_date, budget, manager_id, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [project_name, description || null, start_date || null, end_date || null, budget || null, manager_id, status || 'Planning']
         );
+
+        // --- NEW: Automate PM Status Update ---
+        if (manager_id) {
+            await db.query("UPDATE users SET status = 'Active' WHERE id = ? AND resign_date IS NULL", [manager_id]);
+            console.log(`[DB-SYNC] Manager ${manager_id} status set to Active (if not resigned).`);
+        }
+
         res.status(201).json({ id: result.insertId, message: "Project created successfully" });
     } catch (err) {
         console.error("Failed to create project:", err);
@@ -84,17 +99,34 @@ exports.createTask = async (req, res) => {
             [project_id, task_name, description, final_assignee, priority, due_date, status || 'Todo', estimated_hours, JSON.stringify(resources || [])]
         );
 
-        // Auto-join member to project if not already joined
+        // Set member status to Active when a task is assigned
         if (final_assignee) {
             await db.query(
                 "INSERT IGNORE INTO project_members (project_id, user_id) VALUES (?, ?)",
                 [project_id, final_assignee]
             );
-            // Set member status to Active when a task is assigned
             await db.query(
-                "UPDATE users SET status = 'Active' WHERE id = ?",
+                "UPDATE users SET status = 'Active' WHERE id = ? AND resign_date IS NULL",
                 [final_assignee]
             );
+        }
+
+        // --- NEW: Populate project_resource_allocations from task resources ---
+        if (resources && Array.isArray(resources)) {
+            for (const rName of resources) {
+                try {
+                    const [rRows] = await db.query("SELECT resource_id FROM resources WHERE resource_name = ?", [rName]);
+                    if (rRows.length > 0) {
+                        const rId = rRows[0].resource_id;
+                        await db.query(
+                            "INSERT IGNORE INTO project_resource_allocations (project_id, resource_id, allocated_units) VALUES (?, ?, 0)",
+                            [project_id, rId]
+                        );
+                    }
+                } catch (err) {
+                    console.error("Allocating resource error:", err);
+                }
+            }
         }
 
         res.status(201).json({ task_id: result.insertId, message: "Task created successfully" });
@@ -155,7 +187,7 @@ exports.getProjectMembers = async (req, res) => {
                 SELECT u.id, u.name, u.email, u.specialization
                 FROM users u
                 JOIN project_members pm ON u.id = pm.user_id
-                WHERE pm.project_id = ? AND u.resign_date IS NULL AND u.status = 'Inactive'
+                WHERE pm.project_id = ? AND u.resign_date IS NULL
             `, [projectId]);
             members = rows;
         } catch (dbErr) {
@@ -189,7 +221,9 @@ exports.addProjectMember = async (req, res) => {
             "INSERT IGNORE INTO project_members (project_id, user_id) VALUES (?, ?)",
             [projectId, userId]
         );
-        res.json({ message: "Member added to project" });
+        // Automatically set user status to Active when added to a project (if not resigned)
+        await db.query("UPDATE users SET status = 'Active' WHERE id = ? AND resign_date IS NULL", [userId]);
+        res.json({ message: "Member added to project and status set to Active" });
     } catch (err) {
         console.error("ADD PROJECT MEMBER ERROR:", err);
         res.status(500).json({ message: "Error adding member to project" });
@@ -197,6 +231,22 @@ exports.addProjectMember = async (req, res) => {
 };
 
 /* ================= TASKS ================= */
+exports.getAllTasks = async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT t.*, u.name as assignee_name, p.project_name
+            FROM tasks t 
+            LEFT JOIN users u ON t.assigned_to = u.id 
+            LEFT JOIN projects p ON t.project_id = p.project_id
+            ORDER BY t.task_id DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error("GET ALL TASKS ERROR:", err);
+        res.status(500).json({ message: "Error fetching all tasks" });
+    }
+};
+
 exports.getProjectTasks = async (req, res) => {
     const { projectId } = req.params;
     try {
@@ -217,10 +267,16 @@ exports.getProjectTasks = async (req, res) => {
 exports.getManagerProjects = async (req, res) => {
     const { managerId } = req.params;
     try {
-        const [rows] = await db.query(
-            "SELECT * FROM projects WHERE manager_id = ?",
-            [managerId]
-        );
+        const query = `
+            SELECT 
+                p.*, 
+                u.name AS manager_name,
+                (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) AS member_count
+            FROM projects p
+            LEFT JOIN users u ON p.manager_id = u.id
+            WHERE p.manager_id = ?
+        `;
+        const [rows] = await db.query(query, [managerId]);
         res.json(rows);
     } catch (err) {
         console.error("GET MANAGER PROJECTS ERROR:", err);
@@ -232,9 +288,9 @@ exports.getManagerTeamMembersCount = async (req, res) => {
     const { managerId } = req.params;
     try {
         const [rows] = await db.query(`
-            SELECT COUNT(DISTINCT t.assigned_to) as member_count
-            FROM tasks t
-            JOIN projects p ON t.project_id = p.project_id
+            SELECT COUNT(DISTINCT pm.user_id) as member_count
+            FROM project_members pm
+            JOIN projects p ON pm.project_id = p.project_id
             WHERE p.manager_id = ?
         `, [managerId]);
         res.json(rows[0]);
@@ -655,22 +711,52 @@ exports.logResourceUsage = async (req, res) => {
     const userId = req.user?.id || null;
 
     try {
-        const [resources] = await db.query("SELECT resource_type, cost_per_unit FROM resources WHERE resource_id = ?", [resourceId]);
+        console.log(`[DEBUG] Logging resource usage: Task ${taskId}, Project ${projectId}, Resource ${resourceId}, Qty ${quantity}`);
+
+        const intTaskId = parseInt(taskId);
+        const intProjectId = parseInt(projectId);
+        const intResourceId = parseInt(resourceId);
+        const intQuantity = parseInt(quantity) || 0;
+
+        if (!intProjectId || !intResourceId) {
+            return res.status(400).json({ message: "Invalid Project or Resource ID" });
+        }
+
+        const [resources] = await db.query("SELECT resource_type, cost_per_unit FROM resources WHERE resource_id = ?", [intResourceId]);
         if (resources.length === 0) return res.status(404).json({ message: "Resource not found in catalog" });
 
         const costPerUnit = parseFloat(resources[0].cost_per_unit) || 0;
-        const totalCost = costPerUnit * parseInt(quantity);
+        const totalCost = costPerUnit * intQuantity;
         const category = resources[0].resource_type || "Miscellaneous";
 
         await db.query(`
             INSERT INTO costs (project_id, resource_id, quantity, cost_per_unit, total_cost, usage_date, category, task_id, user_id)
             VALUES (?, ?, ?, ?, ?, CURDATE(), ?, ?, ?)
-        `, [projectId, resourceId, quantity, costPerUnit, totalCost, category, taskId, userId]);
+        `, [intProjectId, intResourceId, intQuantity, costPerUnit, totalCost, category, intTaskId, userId]);
+
+        // --- NEW: Populate project_resource_allocations ---
+        // Check if allocation already exists for this project/resource
+        const [existing] = await db.query(
+            "SELECT allocation_id, allocated_units FROM project_resource_allocations WHERE project_id = ? AND resource_id = ?",
+            [intProjectId, intResourceId]
+        );
+
+        if (existing.length > 0) {
+            await db.query(
+                "UPDATE project_resource_allocations SET allocated_units = allocated_units + ? WHERE allocation_id = ?",
+                [intQuantity, existing[0].allocation_id]
+            );
+        } else {
+            await db.query(
+                "INSERT INTO project_resource_allocations (project_id, resource_id, allocated_units) VALUES (?, ?, ?)",
+                [intProjectId, intResourceId, intQuantity]
+            );
+        }
 
         res.json({ message: "Usage logged successfully", totalCost });
     } catch (err) {
         console.error("LOG RESOURCE USAGE ERROR:", err);
-        res.status(500).json({ message: "Failed to log resource usage" });
+        res.status(500).json({ message: "Failed to log resource usage", details: err.message });
     }
 };
 

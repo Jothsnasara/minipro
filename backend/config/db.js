@@ -82,6 +82,28 @@ async function ensureSchema() {
     `);
     console.log("[DB-FIX] project_members table ensured.");
 
+    // Ensure project_resource_allocations table exists with allocated_units
+    await dbPromise.query(`
+      CREATE TABLE IF NOT EXISTS project_resource_allocations (
+        allocation_id INT AUTO_INCREMENT PRIMARY KEY,
+        project_id INT NOT NULL,
+        resource_id INT NOT NULL,
+        allocated_units INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY project_resource (project_id, resource_id),
+        FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE
+      )
+    `);
+
+    // Column healing for project_resource_allocations
+    const [allocColumns] = await dbPromise.query("SHOW COLUMNS FROM project_resource_allocations");
+    const allocFields = allocColumns.map(col => col.Field);
+    if (!allocFields.includes('allocated_units')) {
+      console.log("[DB-FIX] Adding 'allocated_units' column to project_resource_allocations...");
+      await dbPromise.query("ALTER TABLE project_resource_allocations ADD COLUMN allocated_units INT DEFAULT 0 AFTER resource_id");
+    }
+    console.log("[DB-FIX] project_resource_allocations table ensured.");
+
     // Healing: Populate project_members from existing tasks
     await dbPromise.query(`
       INSERT IGNORE INTO project_members (project_id, user_id)

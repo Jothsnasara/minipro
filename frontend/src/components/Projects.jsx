@@ -205,12 +205,13 @@ const Projects = () => {
                             </div>
 
                             <div className="card-action-btns">
+                                
                                 <button
                                     className="btn-action tasks"
-                                    style={{ width: '100%' }}
+                                    style={{ backgroundColor: '#10b981', color: '#fff', border: 'none' }}
                                     onClick={() => navigate(`/admin/projects/${project.project_id || project.id}/cost-tracking`)}
                                 >
-                                    <span>�</span> Resource Usage
+                                    <span>📊</span> Resource & Budget Usage
                                 </button>
                             </div>
                         </div>

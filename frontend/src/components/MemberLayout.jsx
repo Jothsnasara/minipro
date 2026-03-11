@@ -41,9 +41,9 @@ const MemberLayout = () => {
                     <NavLink to="/member/progress" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
                         <FiTrendingUp /> Progress
                     </NavLink>
-                    <NavLink to="/member/notifications" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+                    <div className="nav-item" style={{ cursor: 'default', opacity: 0.6 }}>
                         <FiBell /> Notifications
-                    </NavLink>
+                    </div>
                 </nav>
 
                 <div className="sidebar-footer">
@@ -62,7 +62,7 @@ const MemberLayout = () => {
             <main className="member-main">
                 <header className="member-top-header">
                     <div className="header-actions">
-                        <div className="notification-bell">
+                        <div className="notification-bell" style={{ cursor: 'default', opacity: 0.6 }}>
                             <FiBell />
                             <span className="bell-badge"></span>
                         </div>
