@@ -73,7 +73,7 @@ function Login() {
 
 
         <h2 className="auth-title">ProjectPulse</h2>
-        <p className="auth-subtitle">Sign in to continue</p>
+        <p className="auth-subtitle">Log in to continue</p>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -103,7 +103,7 @@ function Login() {
           onClick={handleLogin}
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? "Logging in..." : "Log In"}
         </button>
 
 
