@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 import './ProjectTasks.css';
 
 
@@ -94,7 +95,7 @@ const ProjectTasks = () => {
                 project_id: projectId,
                 ...formData
             });
-            alert("Task assigned successfully!");
+            toast.success("Task assigned successfully!");
             setShowModal(false);
             setFormData({
                 task_name: '',
@@ -112,7 +113,7 @@ const ProjectTasks = () => {
         } catch (err) {
             console.error("Error adding task:", err);
             const errMsg = err.response?.data?.message || "Failed to add task.";
-            alert(`Failed: ${errMsg}`);
+            toast.error(`Failed: ${errMsg}`);
         }
     };
 

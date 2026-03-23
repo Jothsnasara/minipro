@@ -28,7 +28,7 @@ const ManagerLayout = () => {
                     {/* Placeholders for visual fidelity to Figma */}
                     <NavLink to="/manager/progress" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>Progress Monitoring</NavLink>
                     <div className="menu-item">Reports & Analytics</div>
-                    <div className="menu-item">Notifications</div>
+                    <NavLink to="/manager/notifications" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>Notifications</NavLink>
                 </nav>
             </aside>
 

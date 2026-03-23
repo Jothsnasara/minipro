@@ -25,7 +25,7 @@ const Admin = () => {
 
   const handleNavigate = (item) => {
     setActiveItem(item.path);
-    if (item.text !== "Notifications" && item.text !== "Reports & Analytics") {
+    if (item.text !== "Reports & Analytics") {
       navigate(item.path);
     }
   };
@@ -97,7 +97,7 @@ const Admin = () => {
         {/* Topbar */}
         <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end", alignItems: "center", bgcolor: "#fff", borderBottom: "1px solid #E5E7EB" }}>
           <Typography sx={{ mr: 3 }}>admin@projecttrack.com</Typography>
-          <Notifications sx={{ mr: 2, cursor: "pointer" }} />
+          <Notifications sx={{ mr: 2, cursor: "pointer" }} onClick={() => { setActiveItem('/admin/notifications'); navigate('/admin/notifications'); }} />
         </Box>
 
         {/* Content Area */}

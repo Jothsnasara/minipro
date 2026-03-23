@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { createAndSendNotification, notifyAdmins } = require("../services/notificationService");
 
 /* ================= PROJECTS ================= */
 exports.getAllProjects = async (req, res) => {
@@ -44,6 +45,13 @@ exports.createProject = async (req, res) => {
         }
 
         res.status(201).json({ id: result.insertId, message: "Project created successfully" });
+
+        // Trigger 1: Notify Admin & PM
+        const msg = `New project "${project_name}" has been created.`;
+        notifyAdmins("New Project Created", msg, 'info', project_name);
+        if (manager_id) {
+            createAndSendNotification(manager_id, "Project Assigned", `You have been assigned to manage ${project_name}.`, 'info', project_name);
+        }
     } catch (err) {
         console.error("Failed to create project:", err);
         res.status(500).json({ message: "Error creating project", error: err.message });
@@ -130,6 +138,19 @@ exports.createTask = async (req, res) => {
         }
 
         res.status(201).json({ task_id: result.insertId, message: "Task created successfully" });
+
+        // Trigger 2: Notify Member
+        if (final_assignee) {
+            const [p] = await db.query("SELECT project_name FROM projects WHERE project_id = ?", [project_id]);
+            const pName = p.length > 0 ? p[0].project_name : "Unknown Project";
+            createAndSendNotification(
+                final_assignee, 
+                "New Task Assigned", 
+                `You have been assigned a new task: "${task_name}". Due date: ${due_date || 'None'}`, 
+                'info', 
+                pName
+            );
+        }
     } catch (err) {
         console.error("CREATE TASK ERROR:", err);
         res.status(500).json({ message: "Error creating task" });
@@ -168,7 +189,7 @@ exports.getAllResources = async (req, res) => {
 
 exports.getAllTeamMembers = async (req, res) => {
     try {
-        const [rows] = await db.query("SELECT id, name, email, role FROM users WHERE role = 'member' AND status = 'Inactive' AND resign_date IS NULL");
+        const [rows] = await db.query("SELECT id, name, email, role FROM users WHERE role = 'member' AND resign_date IS NULL");
         res.json(rows);
     } catch (err) {
         console.error("GET TEAM MEMBERS ERROR:", err);
@@ -224,6 +245,20 @@ exports.addProjectMember = async (req, res) => {
         // Automatically set user status to Active when added to a project (if not resigned)
         await db.query("UPDATE users SET status = 'Active' WHERE id = ? AND resign_date IS NULL", [userId]);
         res.json({ message: "Member added to project and status set to Active" });
+
+        // Trigger 8: Notify PM of New Member
+        const [p] = await db.query("SELECT project_name, manager_id FROM projects WHERE project_id = ?", [projectId]);
+        if (p.length > 0 && p[0].manager_id) {
+            const [u] = await db.query("SELECT name FROM users WHERE id = ?", [userId]);
+            const uName = u.length > 0 ? u[0].name : "A user";
+            createAndSendNotification(
+                p[0].manager_id,
+                "New Team Member",
+                `${uName} has been added to the project.`,
+                'info',
+                p[0].project_name
+            );
+        }
     } catch (err) {
         console.error("ADD PROJECT MEMBER ERROR:", err);
         res.status(500).json({ message: "Error adding member to project" });
@@ -341,9 +376,39 @@ exports.setupProject = async (req, res) => {
         if (selectedMembers && selectedMembers.length > 0) {
             const values = selectedMembers.map(userId => [id, userId]);
             await db.query("INSERT IGNORE INTO project_members (project_id, user_id) VALUES ?", [values]);
+
+            // Notify each assigned member
+            const [pNameRow] = await db.query("SELECT project_name FROM projects WHERE project_id = ?", [id]);
+            const pName = pNameRow.length > 0 ? pNameRow[0].project_name : "Your Project";
+            
+            for (let memberId of selectedMembers) {
+                await db.query("UPDATE users SET status = 'Active' WHERE id = ? AND resign_date IS NULL", [memberId]);
+                await createAndSendNotification(
+                    memberId,
+                    "Project Assigned",
+                    `You have been newly assigned to the project "${pName}".`,
+                    "info",
+                    pName
+                );
+            }
         }
 
         res.json({ message: "Project setup completed successfully" });
+
+        // Trigger 7: Manpower Alert (Team Members < 3)
+        const [pMembers] = await db.query("SELECT COUNT(*) as count FROM project_members WHERE project_id = ?", [id]);
+        if (pMembers.length > 0 && pMembers[0].count < 3) {
+            const [p] = await db.query("SELECT project_name, manager_id FROM projects WHERE project_id = ?", [id]);
+            if (p.length > 0 && p[0].manager_id) {
+                createAndSendNotification(
+                    p[0].manager_id,
+                    "Manpower Alert",
+                    `Project "${p[0].project_name}" has fewer than 3 team members. Consider adding more resources.`,
+                    'warning',
+                    p[0].project_name
+                );
+            }
+        }
     } catch (err) {
         console.error("SETUP PROJECT ERROR:", err);
         res.status(500).json({ message: "Error setting up project" });
@@ -583,6 +648,38 @@ exports.updateTaskProgress = async (req, res) => {
             [progress, status, taskId]
         );
         res.json({ message: "Task updated successfully" });
+
+        // Triggers 3, 10: Task Completed / Progress Updates (Notify PM)
+        const [t] = await db.query("SELECT project_id, task_name, assigned_to FROM tasks WHERE task_id = ?", [taskId]);
+        if (t.length > 0) {
+            const { project_id, task_name, assigned_to } = t[0];
+            const [p] = await db.query("SELECT project_name, manager_id FROM projects WHERE project_id = ?", [project_id]);
+            
+            if (p.length > 0 && p[0].manager_id) {
+                const [u] = await db.query("SELECT name FROM users WHERE id = ?", [assigned_to]);
+                const uName = u.length > 0 ? u[0].name : "A member";
+
+                if (status === 'Completed' || status === 'Pending Review') {
+                    // Trigger 3: Task Completed
+                    createAndSendNotification(
+                        p[0].manager_id,
+                        "Task Completed",
+                        `${uName} has completed the task: "${task_name}".`,
+                        'success',
+                        p[0].project_name
+                    );
+                } else if (progress > 0) {
+                    // Trigger 10: Progress Update
+                    createAndSendNotification(
+                        p[0].manager_id,
+                        "Progress Update",
+                        `Task "${task_name}" progress updated to ${progress}% by ${uName}.`,
+                        'info',
+                        p[0].project_name
+                    );
+                }
+            }
+        }
     } catch (err) {
         console.error("UPDATE TASK PROGRESS ERROR:", err);
         res.status(500).json({ message: "Failed to update task" });
@@ -754,6 +851,50 @@ exports.logResourceUsage = async (req, res) => {
         }
 
         res.json({ message: "Usage logged successfully", totalCost });
+
+        // Triggers 5, 6, 9: Budget & Resource Conflict Detection
+        const [projRows] = await db.query("SELECT budget, project_name, manager_id FROM projects WHERE project_id = ?", [intProjectId]);
+        if (projRows.length > 0 && projRows[0].manager_id) {
+            const { budget, project_name, manager_id } = projRows[0];
+            const b = parseFloat(budget) || 0;
+
+            if (b > 0) {
+                // Re-calculate Total Spent
+                const [totalRows] = await db.query("SELECT COALESCE(SUM(total_cost), 0) as total FROM costs WHERE project_id = ?", [intProjectId]);
+                const totalSpent = parseFloat(totalRows[0].total);
+
+                if (totalSpent > b) {
+                    // Trigger 6: Exceeds 100%
+                    createAndSendNotification(
+                        manager_id,
+                        "Budget Exceeded",
+                        `Project budget of $${b} has been exceeded! Total cost is $${totalSpent}.`,
+                        'critical',
+                        project_name
+                    );
+                } else if (totalSpent >= b * 0.90) {
+                    // Trigger 5: Reaches 90%
+                    createAndSendNotification(
+                        manager_id,
+                        "Budget Warning",
+                        `Project budget is at 90% or more. Total spent: $${totalSpent} out of $${b}.`,
+                        'warning',
+                        project_name
+                    );
+                }
+            }
+
+            // Pseudo logical check for resource conflict (Trigger 9)
+            if (intQuantity > 50) { // Arbitrary heuristic threshold
+                createAndSendNotification(
+                    manager_id,
+                    "Resource Conflict",
+                    `High volume of resources (${intQuantity} units) requested by Task ${intTaskId}. Potential constraint.`,
+                    'critical',
+                    project_name
+                );
+            }
+        }
     } catch (err) {
         console.error("LOG RESOURCE USAGE ERROR:", err);
         res.status(500).json({ message: "Failed to log resource usage", details: err.message });

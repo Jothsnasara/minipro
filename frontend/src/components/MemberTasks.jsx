@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 import './MemberTasks.css';
 
 const MemberTasks = () => {
@@ -92,7 +93,7 @@ const MemberTasks = () => {
     const submitResourceUsage = async (task) => {
         const usage = resourceUsage[task.task_id];
         if (!usage || !usage.resourceId || !usage.used || parseInt(usage.used) <= 0) {
-            alert('Please select a resource and enter a valid quantity.');
+            toast.error('Please select a resource and enter a valid quantity.');
             return;
         }
 
@@ -102,7 +103,7 @@ const MemberTasks = () => {
                 resourceId: usage.resourceId,
                 quantity: usage.used
             });
-            alert('Resource usage logged successfully!');
+            toast.success('Resource usage logged successfully!');
 
             // Clear the form
             setResourceUsage(prev => {
@@ -112,7 +113,7 @@ const MemberTasks = () => {
             });
         } catch (err) {
             console.error("Failed to log resource usage:", err);
-            alert(err.response?.data?.message || 'Failed to log usage');
+            toast.error(err.response?.data?.message || 'Failed to log usage');
         }
     };
 

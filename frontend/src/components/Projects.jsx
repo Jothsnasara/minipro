@@ -7,6 +7,7 @@ import { Add, ArrowBack, Folder, CheckCircle, AttachMoney, Groups } from '@mui/i
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
 import '../styles/ManagerDashboard.css';
 
 const Projects = () => {
@@ -97,7 +98,7 @@ const Projects = () => {
     const handleSubmit = async () => {
         try {
             if (!formData.project_name || !formData.manager_id) {
-                alert("Please fill all required fields");
+                toast.error("Please fill all required fields");
                 return;
             }
             await api.post('/projects', formData);
@@ -105,7 +106,7 @@ const Projects = () => {
             handleClose();
         } catch (error) {
             console.error("Error creating project:", error);
-            alert("Failed to create project: " + (error.response?.data?.message || error.message));
+            toast.error("Failed to create project: " + (error.response?.data?.message || error.message));
         }
     };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiDollarSign } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import '../styles/ManagerDashboard.css';
 
 const ManagerDashboard = () => {
@@ -65,7 +66,7 @@ const ManagerDashboard = () => {
         e.preventDefault();
         try {
             await api.post('/projects/tasks', taskFormData);
-            alert("Task assigned successfully!");
+            toast.success("Task assigned successfully!");
             setShowTaskModal(false);
             setTaskFormData({
                 project_id: '',
@@ -80,7 +81,7 @@ const ManagerDashboard = () => {
             if (managerId) fetchProjects(managerId);
         } catch (err) {
             console.error("Error adding task:", err);
-            alert("Failed to add task.");
+            toast.error("Failed to add task.");
         }
     };
 
@@ -144,7 +145,7 @@ const ManagerDashboard = () => {
                 if (managerId) fetchProjects(managerId);
             } catch (error) {
                 console.error("Delete failed", error);
-                // alert("Failed to delete project"); // using console for now as alert not passed
+                // toast.error("Failed to delete project"); // using console for now as alert not passed
             }
         } else {
             setModalConfig({ ...modalConfig, isOpen: false });

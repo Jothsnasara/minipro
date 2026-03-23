@@ -20,6 +20,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { toast } from 'react-toastify';
 
 const roleColors = {
   admin: "#EDE9FE",
@@ -63,7 +64,7 @@ export default function UserManagement() {
       });
       fetchUsers(); // refresh table
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update resign date");
+      toast.error(err.response?.data?.message || "Failed to update resign date");
     }
   };
 
@@ -206,7 +207,7 @@ export default function UserManagement() {
                             setOpenResignId(null);
                             fetchUsers();
                           } catch (err) {
-                            alert(err.response?.data?.message || "Failed to update resign date");
+                            toast.error(err.response?.data?.message || "Failed to update resign date");
                           }
                         }}
                         onClose={() => setOpenResignId(null)}

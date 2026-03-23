@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ManagerDashboard.css';
@@ -27,7 +28,7 @@ const ProjectForm = () => {
     useEffect(() => {
         // 1. Redirect if no project data is passed
         if (!project_id) {
-            alert("No project selected for activation. Redirecting to dashboard.");
+            toast.error("No project selected for activation. Redirecting to dashboard.");
             navigate('/manager-dashboard');
             return;
         }
@@ -79,7 +80,7 @@ const ProjectForm = () => {
         const start = new Date(formData.start_date);
         const end = new Date(formData.end_date);
         if (end < start) {
-            alert("Error: End Date cannot be before Start Date.");
+            toast.error("Error: End Date cannot be before Start Date.");
             return;
         }
 
@@ -92,11 +93,11 @@ const ProjectForm = () => {
         try {
             // Update project details + send member IDs to the backend on Port 5001
             await api.put(`/projects/setup/${formData.project_id}`, formData);
-            alert("Project Setup Completed & Team Assigned!");
+            toast.success("Project Setup Completed & Team Assigned!");
             navigate('/manager-dashboard');
         } catch (err) {
             console.error("Error updating project:", err);
-            alert("Failed to update project: " + (err.response?.data?.message || err.message));
+            toast.error("Failed to update project: " + (err.response?.data?.message || err.message));
         }
     };
 
@@ -193,9 +194,4 @@ const ProjectForm = () => {
         </div>
     );
 };
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-// Call this instead of alert:
-toast.success("Project assigned successfully!");
 export default ProjectForm;

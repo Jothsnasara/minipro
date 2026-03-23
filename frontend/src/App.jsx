@@ -16,6 +16,7 @@ import ManagerLayout from "./components/ManagerLayout";
 import ManagerProgress from "./components/ManagerProgress";
 import ManagerProjects from "./components/ManagerProjects";
 import ManagerCostTracking from "./components/ManagerCostTracking";
+import Notifications from "./components/Notifications";
 import MemberDashboard from "./components/MemberDashboard";
 import MemberLayout from "./components/MemberLayout";
 import MemberProgress from "./components/MemberProgress";
@@ -47,6 +48,7 @@ function App() {
         <Route path="projects" element={<Projects />} /> {/* /admin/projects */}
         <Route path="projects/:projectId/cost-tracking" element={<ManagerCostTracking />} />
         <Route path="register" element={<Register />} /> {/* /admin/register */}
+        <Route path="notifications" element={<Notifications />} /> {/* /admin/notifications */}
       </Route>
 
       {/* Manager routes */}
@@ -66,6 +68,7 @@ function App() {
         <Route path="/manager/projects/:projectId/tasks" element={<ProjectTasks />} />
         <Route path="/manager/projects/:projectId/cost-tracking" element={<ManagerCostTracking />} />
         <Route path="/manager/progress" element={<ManagerProgress />} />
+        <Route path="/manager/notifications" element={<Notifications />} />
       </Route>
 
       {/* Member routes */}
@@ -79,7 +82,7 @@ function App() {
         <Route path="/member" element={<MemberDashboard />} />
         <Route path="/member/tasks" element={<MemberTasks />} />
         <Route path="/member/progress" element={<MemberProgress />} />
-      
+        <Route path="/member/notifications" element={<Notifications />} />
       </Route>
 
       {/* Redirect unknown routes to login */}

@@ -1,0 +1,260 @@
+.notifications-page {
+    padding: 30px;
+    font-family: 'Inter', sans-serif; /* Standard modern font */
+    color: #333;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.back-link {
+    color: #2962ff;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.back-arrow {
+    margin-right: 5px;
+}
+
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.header-titles h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+    color: #1a1f36;
+}
+
+.header-titles p {
+    font-size: 14px;
+    color: #697386;
+    margin: 0;
+}
+
+.mark-all-btn {
+    background-color: #2962ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.mark-all-btn:hover {
+    background-color: #1c44b2;
+}
+
+.stats-cards-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.stat-card-top {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.stat-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 12px;
+    font-size: 14px;
+}
+
+.total-icon {
+    background-color: #e6f0ff;
+    color: #2962ff;
+}
+
+.unread-icon {
+    background-color: #fff0d4;
+    color: #ff9800;
+}
+
+.critical-icon {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+.warning-icon {
+    background-color: #fff8e1;
+    color: #ffc107;
+}
+
+.stat-text {
+    font-size: 14px;
+    color: #697386;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1f36;
+}
+
+.notifications-list-box {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.list-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1f36;
+    margin: 0 0 15px 20px;
+}
+
+.loading-text {
+    padding: 20px;
+    color: #697386;
+}
+
+.list-items-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+    background: #ffffff;
+    transition: background-color 0.2s ease;
+}
+
+.notification-item.last-item {
+    border-bottom: none;
+    padding-bottom: 10px;
+}
+
+.notification-item:hover {
+    background-color: #fafafa;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* Specific colors matching the image */
+.icon-budget {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+.icon-warning {
+    background-color: #fff8e1;
+    color: #ffc107;
+}
+
+.icon-success {
+    background-color: #e8f5e9;
+    color: #4caf50;
+}
+
+.icon-team {
+    background-color: #e3f2fd;
+    color: #2196f3;
+}
+
+.icon-critical {
+    background-color: #ffebee;
+    color: #f44336;
+    border: 1px solid #ffcdd2; /* subtle border for conflict */
+}
+
+.icon-info {
+    background-color: #e3f2fd;
+    color: #2196f3;
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1f36;
+    margin-bottom: 4px;
+}
+
+.notification-message {
+    font-size: 13px;
+    color: #697386;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.notification-meta {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.time-ago {
+    color: #8792a2;
+    margin-right: 15px;
+}
+
+.mark-read-action {
+    color: #2962ff;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.mark-read-action:hover {
+    text-decoration: underline;
+}
+
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #2962ff;
+    border-radius: 50%;
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+}

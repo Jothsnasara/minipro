@@ -5,6 +5,7 @@ const db = require('./config/db'); // 1. Move DB import to the top
 
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const { verifyToken } = require("./middleware/authMiddleware");
 
 const app = express();
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 
 app.use("/projects", projectRoutes);
 app.use("/", authRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 2. The User Fetch Route (Keep this here or move to authRoutes)
 app.get('/api/users', verifyToken, async (req, res) => {

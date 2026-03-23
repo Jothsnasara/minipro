@@ -110,6 +110,22 @@ async function ensureSchema() {
       SELECT DISTINCT project_id, assigned_to FROM tasks WHERE assigned_to IS NOT NULL
     `);
     console.log("[DB-FIX] project_members membership healed.");
+
+    // Ensure notifications table exists
+    await dbPromise.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        notification_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        type ENUM('critical', 'warning', 'success', 'info') DEFAULT 'info',
+        project_name VARCHAR(255),
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    console.log("[DB-FIX] notifications table ensured.");
   } catch (err) {
     console.error("[DB-FIX] Schema synchronization failed:", err.message);
   }

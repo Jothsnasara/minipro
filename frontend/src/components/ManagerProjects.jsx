@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 import '../Styles/ManagerDashboard.css';
 
 const ManagerProjects = () => {
@@ -215,7 +216,7 @@ const ManagerProjects = () => {
                                                             setProjectMembers(res.data || []);
                                                             fetchProjects(managerId); // Refresh count
                                                         } catch (err) {
-                                                            alert(err.response?.data?.message || "Error adding member");
+                                                            toast.error(err.response?.data?.message || "Error adding member");
                                                         }
                                                     }}
                                                 >
