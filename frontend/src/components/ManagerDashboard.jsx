@@ -29,28 +29,26 @@ const ManagerDashboard = () => {
 
     const fetchProjects = async (id) => {
         try {
-            // Using port 5001 as per configuration
-            const response = await api.get(`/projects/manager/${id}`);
+            const [response, teamRes] = await Promise.all([
+                api.get(`/api/projects/manager/${id}`),
+                api.get(`/api/projects/manager/${id}/team-members`)
+            ]);
+            
             setProjects(response.data);
-
-            // Fetch team members count
-            const teamRes = await api.get(`/projects/manager/${id}/team-members`);
             setTeamMemberCount(teamRes.data.member_count || 0);
 
-            // Fetch resources for the modal
-            const resRes = await api.get('/projects/resources/all');
+            const resRes = await api.get('/api/projects/resources/all');
             setAllResources(resRes.data || []);
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
         }
     };
 
-    // Effect to fetch members when project selection changes in modal
     useEffect(() => {
         const fetchProjectMembers = async () => {
             if (taskFormData.project_id) {
                 try {
-                    const res = await api.get(`/projects/${taskFormData.project_id}/members`);
+                    const res = await api.get(`/api/projects/${taskFormData.project_id}/members`);
                     setTaskMembers(res.data || []);
                 } catch (err) {
                     console.error("Error fetching project members:", err);
@@ -65,7 +63,7 @@ const ManagerDashboard = () => {
     const handleAddTask = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/projects/tasks', taskFormData);
+            await api.post('/api/projects/tasks', taskFormData);
             toast.success("Task assigned successfully!");
             setShowTaskModal(false);
             setTaskFormData({
@@ -100,7 +98,6 @@ const ManagerDashboard = () => {
         const userStr = localStorage.getItem("user");
         if (userStr) {
             const user = JSON.parse(userStr);
-            console.log("Logged in user:", user);
             if (user && user.id) {
                 setManagerId(user.id);
                 fetchProjects(user.id);
@@ -135,30 +132,14 @@ const ManagerDashboard = () => {
     const handleModalAction = async () => {
         if (modalConfig.type === 'confirm') {
             try {
-                // Assuming delete endpoint exists or using placeholder for now since user didn't provide backend code
-                // But generally specific delete logic wasn't in previous plans. 
-                // Using route from provided frontend code: /api/projects/delete/:id -> adapting to our backend if needed
-                // For now, let's assume standard REST: DELETE /projects/:id
-                await api.delete(`/projects/${modalConfig.project_id}`);
+                await api.delete(`/api/projects/${modalConfig.project_id}`);
                 setModalConfig({ ...modalConfig, isOpen: false });
-                // Refresh
                 if (managerId) fetchProjects(managerId);
             } catch (error) {
                 console.error("Delete failed", error);
-                // toast.error("Failed to delete project"); // using console for now as alert not passed
             }
         } else {
             setModalConfig({ ...modalConfig, isOpen: false });
-        }
-    };
-
-    // Calculate Progress for display
-    const getProgress = (status) => {
-        switch (status) {
-            case 'Completed': return 100;
-            case 'On Track': return 75;
-            case 'At Risk': return 45;
-            default: return 30;
         }
     };
 
@@ -187,7 +168,6 @@ const ManagerDashboard = () => {
                                     <span className={`badge ${proj.status === 'Completed' ? 'on-track' : proj.status === 'Planning' ? 'planning-badge' : 'at-risk'}`}>
                                         {proj.status || 'Planning'}
                                     </span>
-                                    {/* Delete button logic would go here */}
                                 </div>
                             </div>
 
@@ -211,14 +191,10 @@ const ManagerDashboard = () => {
                                     </button>
                                 </div>
                             ) : (
-                                <>
-                                    <div className="card-details">
-                                        <div className="detail-item"><span>Progress</span><strong>{getProgress(proj.status)}%</strong></div>
-                                        <div className="detail-item"><span>Members</span><strong>{proj.member_count || 0}</strong></div>
-                                        <div className="detail-item"><span>Deadline</span><strong>{new Date(proj.end_date).toLocaleDateString()}</strong></div>
-                                    </div>
-                                    <div className="card-progress-bar"><div className="progress-fill" style={{ width: `${getProgress(proj.status)}%` }}></div></div>
-                                </>
+                                <div className="card-details">
+                                    <div className="detail-item"><span>Members</span><strong>{proj.member_count || 0}</strong></div>
+                                    <div className="detail-item"><span>Deadline</span><strong>{new Date(proj.end_date).toLocaleDateString()}</strong></div>
+                                </div>
                             )}
                         </div>
                     ))}

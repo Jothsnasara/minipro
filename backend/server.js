@@ -3,15 +3,23 @@ const express = require("express");
 const cors = require("cors");
 const db = require('./config/db'); // 1. Move DB import to the top
 
+// --- ROUTE IMPORTS (Moved reportRoutes here to fix the ReferenceError) ---
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const reportRoutes = require('./routes/reportRoutes'); 
 const { verifyToken } = require("./middleware/authMiddleware");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
+
+// --- ROUTES REGISTRATION ---
+app.use('/api/reports', reportRoutes); // Reports first!
+app.use("/api/projects", projectRoutes);
+app.use("/", authRoutes);              // Auth last!
+app.use("/api/notifications", notificationRoutes);
 
 // One-time Sync: Ensure all members and managers assigned to projects are 'Active'
 // EXCEPT for those who have resigned (they must stay NULL)
@@ -45,12 +53,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- ROUTES ---
-
-app.use("/projects", projectRoutes);
-app.use("/", authRoutes);
-app.use("/api/notifications", notificationRoutes);
-
 // 2. The User Fetch Route (Keep this here or move to authRoutes)
 app.get('/api/users', verifyToken, async (req, res) => {
     try {
@@ -65,5 +67,5 @@ app.get('/api/users', verifyToken, async (req, res) => {
 
 // --- SERVER START ---
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));

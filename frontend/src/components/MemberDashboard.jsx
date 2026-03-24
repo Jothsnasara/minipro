@@ -25,7 +25,7 @@ const MemberDashboard = () => {
 
     const fetchDashboardData = async (userId) => {
         try {
-            const res = await api.get(`/projects/member/dashboard/${userId}`);
+            const res = await api.get(`/api/projects/member/dashboard/${userId}`);
             setData(res.data);
             setLoading(false);
         } catch (err) {

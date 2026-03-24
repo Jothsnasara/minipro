@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     FiActivity, FiAlertCircle,
     FiArrowLeft,
@@ -35,7 +35,7 @@ const ManagerProgress = () => {
 
     const fetchData = async (managerId) => {
         try {
-            const res = await api.get(`/projects/manager/${managerId}/progress`);
+            const res = await api.get(`/api/projects/manager/${managerId}/progress`);
             setData(res.data);
         } catch (err) {
             console.error('Error fetching manager progress:', err);
@@ -46,7 +46,7 @@ const ManagerProgress = () => {
 
     const handleReviewTask = async (taskId) => {
         try {
-            await api.put(`/projects/tasks/${taskId}/review`);
+            await api.put(`/api/projects/tasks/${taskId}/review`);
             // Update local state
             setData(prev => ({
                 ...prev,
@@ -159,7 +159,7 @@ const ManagerProgress = () => {
                 <div className="chart-container">
                     <h3>Progress Trend</h3>
                     <span className="chart-subtitle">Planned vs Actual (hover for details)</span>
-                    <div style={{ height: 260, marginTop: 16 }}>
+                    <div style={{ width: '100%', height: '260px', minWidth: '0', marginTop: '16px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={trendData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
                                 <defs>
@@ -183,7 +183,7 @@ const ManagerProgress = () => {
                 <div className="chart-container">
                     <h3>Project Progress Comparison</h3>
                     <span className="chart-subtitle">Average task completion per project</span>
-                    <div style={{ height: 260, marginTop: 16 }}>
+                    <div style={{ width: '100%', height: '260px', minWidth: '0', marginTop: '16px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={barData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -270,8 +270,8 @@ const ManagerProgress = () => {
                             </thead>
                             <tbody>
                                 {projects.map(project => (
-                                    <>
-                                        <tr key={project.project_id}>
+                                    <React.Fragment key={project.project_id}>
+                                        <tr>
                                             <td style={{ fontWeight: 500 }}>{project.project_name}</td>
                                             <td>
                                                 <div className="progress-bar-container">
@@ -324,7 +324,7 @@ const ManagerProgress = () => {
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>

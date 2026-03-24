@@ -47,7 +47,7 @@ const ProjectForm = () => {
         const fetchMembers = async () => {
             try {
                 // Fetch specifically inactive team members instead of all users
-                const res = await api.get(`/projects/team-members/all`);
+                const res = await api.get(`/api/projects/team-members/all`);
                 console.log("Team members loaded:", res.data);
                 setAvailableMembers(res.data);
             } catch (err) {
@@ -92,7 +92,7 @@ const ProjectForm = () => {
 
         try {
             // Update project details + send member IDs to the backend on Port 5001
-            await api.put(`/projects/setup/${formData.project_id}`, formData);
+            await api.put(`/api/projects/setup/${formData.project_id}`, formData);
             toast.success("Project Setup Completed & Team Assigned!");
             navigate('/manager-dashboard');
         } catch (err) {

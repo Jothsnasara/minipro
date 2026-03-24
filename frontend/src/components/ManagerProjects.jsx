@@ -19,7 +19,7 @@ const ManagerProjects = () => {
 
     const fetchProjects = async (id) => {
         try {
-            const res = await api.get(`/projects/manager/${id}`);
+            const res = await api.get(`/api/projects/manager/${id}`);
             setProjects(res.data);
         } catch (err) {
             console.error("Error fetching projects:", err);
@@ -28,7 +28,6 @@ const ManagerProjects = () => {
 
     const fetchAllMembers = async () => {
         try {
-            // FIXED: Changed from /auth/users/members to /api/users
             const res = await api.get('/api/users');
             setMembers(res.data);
         } catch (err) {
@@ -52,13 +51,26 @@ const ManagerProjects = () => {
         setLoadingTeam(true);
         try {
             const pId = project.project_id || project.id;
-            const res = await api.get(`/projects/${pId}/members`);
+            const res = await api.get(`/api/projects/${pId}/members`);
             setProjectMembers(res.data || []);
         } catch (err) {
             console.error("Failed to fetch project members:", err);
             setProjectMembers([]);
         } finally {
             setLoadingTeam(false);
+        }
+    };
+
+    const handleMarkComplete = async (projectId) => {
+        try {
+            await api.put(`/api/projects/status-update/${projectId}`, { status: 'Completed' });
+            toast.success('Project marked as Completed successfully!');
+            setProjects(prev => prev.map(p => 
+                (p.project_id === projectId || p.id === projectId) ? { ...p, status: 'Completed' } : p
+            ));
+        } catch (err) {
+            console.error("Failed to update project status:", err);
+            toast.error(err.response?.data?.message || "Failed to update project status.");
         }
     };
 
@@ -107,16 +119,6 @@ const ManagerProjects = () => {
                             </div>
                         </div>
 
-                        <div className="card-progress">
-                            <div className="progress-labels">
-                                <span>Progress</span>
-                                <strong>75%</strong>
-                            </div>
-                            <div className="bar-bg">
-                                <div className="bar-fill" style={{ width: '75%' }}></div>
-                            </div>
-                        </div>
-
                         <div className="card-action-btns">
                             <button
                                 className="btn-action tasks"
@@ -136,6 +138,39 @@ const ManagerProjects = () => {
                             }}>
                                 <span className="btn-icon">💰</span> Cost Tracking
                             </button>
+                            
+                            {proj.status === 'Completed' ? (
+                                <div style={{ 
+                                    padding: '10px 20px', 
+                                    backgroundColor: '#ECFDF5', 
+                                    color: '#10B981', 
+                                    borderRadius: '12px', 
+                                    fontWeight: '600',
+                                    fontSize: '0.875rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    border: '1px solid #10B981'
+                                }}>
+                                    <span>✅</span> Project Completed
+                                </div>
+                            ) : (
+                                <button 
+                                    className="btn-action" 
+                                    style={{ 
+                                        backgroundColor: '#10b981', 
+                                        color: '#fff', 
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        opacity: proj.status === 'Active' ? 1 : 0.6
+                                    }} 
+                                    disabled={proj.status !== 'Active'}
+                                    onClick={() => handleMarkComplete(proj.project_id || proj.id)}
+                                >
+                                    <span className="btn-icon">✅</span> Mark Completed
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -152,7 +187,6 @@ const ManagerProjects = () => {
                         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading team...</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            {/* Current Team Section */}
                             <div>
                                 <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     ✅ Members Added to Project ({projectMembers.length})
@@ -182,7 +216,6 @@ const ManagerProjects = () => {
 
                             <Divider />
 
-                            {/* Add Members Section */}
                             <div>
                                 <h4 style={{ fontSize: '0.9rem', marginBottom: '0.8rem', color: '#475569' }}>Remaining Members Pool</h4>
                                 <div className="member-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
@@ -210,11 +243,10 @@ const ManagerProjects = () => {
                                                     onClick={async () => {
                                                         try {
                                                             const pId = selectedProject.project_id || selectedProject.id;
-                                                            await api.post(`/projects/${pId}/members`, { userId: member.id });
-                                                            // Refresh project members
-                                                            const res = await api.get(`/projects/${pId}/members`);
+                                                            await api.post(`/api/projects/${pId}/members`, { userId: member.id });
+                                                            const res = await api.get(`/api/projects/${pId}/members`);
                                                             setProjectMembers(res.data || []);
-                                                            fetchProjects(managerId); // Refresh count
+                                                            fetchProjects(managerId);
                                                         } catch (err) {
                                                             toast.error(err.response?.data?.message || "Error adding member");
                                                         }

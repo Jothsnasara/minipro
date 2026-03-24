@@ -23,12 +23,21 @@ router.post("/", verifyToken, isAdmin, projectController.createProject);
 router.post("/tasks", verifyToken, isManager, projectController.createTask);
 
 // --- ACTION ROUTES ---
+// routes/projectRoutes.js
+
+// ... imports ...
+
+// --- ACTION ROUTES (Priority Order) ---
+// This MUST be before any routes using generic :id to prevent 404 errors
+router.put('/status-update/:id', verifyToken, isManager, projectController.updateProjectStatus);
+
 router.put('/setup/:id', verifyToken, isManager, projectController.setupProject);
-router.put('/complete-project/:id', verifyToken, isManager, projectController.completeProject);
+router.put('/:id/complete', verifyToken, isManager, projectController.completeProject);
 router.get("/:projectId/members", verifyToken, projectController.getProjectMembers);
 router.get("/:projectId/tasks", verifyToken, projectController.getProjectTasks);
 router.get("/:projectId/cost-tracking", verifyToken, isManager, projectController.getProjectCostTracking);
 
+// ... rest of file ...
 // --- MEMBER DASHBOARD ROUTES ---
 router.get("/member/dashboard/:memberId", verifyToken, projectController.getMemberDashboardData);
 router.get("/member/progress/:memberId", verifyToken, projectController.getMemberProgressData);

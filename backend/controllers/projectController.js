@@ -8,7 +8,8 @@ exports.getAllProjects = async (req, res) => {
             SELECT 
                 p.*, 
                 u.name AS manager_name,
-                (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) AS member_count
+                (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) AS member_count,
+                IFNULL((SELECT ROUND((SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / NULLIF(COUNT(task_id), 0)) * 100, 0) FROM tasks WHERE project_id = p.project_id), 0) AS calculated_progress
             FROM projects p
             LEFT JOIN users u ON p.manager_id = u.id
         `;
@@ -154,6 +155,26 @@ exports.createTask = async (req, res) => {
     } catch (err) {
         console.error("CREATE TASK ERROR:", err);
         res.status(500).json({ message: "Error creating task" });
+    }
+};
+// controllers/projectController.js
+exports.updateProjectStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+        if (status === 'Completed') {
+            // We update the status AND the end_date to mark it officially finished
+            await db.query(
+                "UPDATE projects SET status = 'Completed', end_date = CURRENT_DATE WHERE project_id = ?", 
+                [id]
+            );
+        } else {
+            await db.query("UPDATE projects SET status = ? WHERE project_id = ?", [status, id]);
+        }
+        res.json({ message: `Project status updated to ${status}` });
+    } catch (err) {
+        console.error("UPDATE PROJECT STATUS ERROR:", err);
+        res.status(500).json({ message: "Error updating project status" });
     }
 };
 
@@ -306,7 +327,10 @@ exports.getManagerProjects = async (req, res) => {
             SELECT 
                 p.*, 
                 u.name AS manager_name,
-                (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) AS member_count
+                (SELECT COUNT(*) FROM project_members pm WHERE pm.project_id = p.project_id) AS member_count,
+                (SELECT COUNT(*) FROM tasks WHERE project_id = p.project_id) AS total_tasks_count,
+                (SELECT COUNT(*) FROM tasks WHERE project_id = p.project_id AND progress = 100) AS completed_tasks_count,
+                IFNULL((SELECT ROUND((SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) / NULLIF(COUNT(task_id), 0)) * 100, 0) FROM tasks WHERE project_id = p.project_id), 0) AS calculated_progress
             FROM projects p
             LEFT JOIN users u ON p.manager_id = u.id
             WHERE p.manager_id = ?
@@ -335,6 +359,8 @@ exports.getManagerTeamMembersCount = async (req, res) => {
     }
 };
 
+
+
 exports.getUnfilledProjects = async (req, res) => {
     const { managerId } = req.params;
     try {
@@ -352,14 +378,64 @@ exports.getUnfilledProjects = async (req, res) => {
 exports.completeProject = async (req, res) => {
     const { id } = req.params;
     try {
-        await db.query(
-            "UPDATE projects SET status = 'Completed' WHERE project_id = ?",
+        // Validation check: Are all tasks completed (progress == 100)?
+        const [check] = await db.query(
+            "SELECT COUNT(*) AS incomplete_count FROM tasks WHERE project_id = ? AND progress < 100",
             [id]
         );
-        res.json({ message: "Project marked as completed" });
+
+        const [totalTasks] = await db.query(
+            "SELECT COUNT(*) AS total FROM tasks WHERE project_id = ?",
+            [id]
+        );
+        
+        if (totalTasks[0].total === 0) {
+            return res.status(400).json({ message: "Cannot complete project: No tasks defined." });
+        }
+
+        if (check[0].incomplete_count > 0) {
+            return res.status(400).json({ message: "Cannot complete project: Some tasks are still in progress." });
+        }
+
+        await db.query(
+            "UPDATE projects SET status = 'Completed', actual_end_date = CURRENT_DATE WHERE project_id = ?",
+            [id]
+        );
+        res.json({ message: "Project successfully closed. Analytics updated!" });
     } catch (err) {
         console.error("COMPLETE PROJECT ERROR:", err);
         res.status(500).json({ message: "Error completing project" });
+    }
+};
+
+// controllers/projectController.js
+
+/* ================= UPDATE PROJECT STATUS (MANAGER OVERRIDE) ================= */
+exports.updateProjectStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Debug log to confirm Port 5005 is receiving the request
+    console.log(`[PORT-5005-SYNC] Updating Project ${id} to status: ${status}`);
+
+    try {
+        if (status === 'Completed') {
+            // Update status and end_date for Success Rate calculation
+            await db.query(
+                "UPDATE projects SET status = 'Completed', end_date = CURRENT_DATE WHERE project_id = ?", 
+                [id]
+            );
+        } else {
+            await db.query("UPDATE projects SET status = ? WHERE project_id = ?", [status, id]);
+        }
+
+        res.json({ 
+            message: `Project status successfully updated to ${status}`,
+            project_id: id 
+        });
+    } catch (err) {
+        console.error("UPDATE PROJECT STATUS ERROR:", err);
+        res.status(500).json({ message: "Internal Server Error during status update" });
     }
 };
 

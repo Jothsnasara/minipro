@@ -33,7 +33,7 @@ const MemberProgress = () => {
 
     const fetchProgressData = async (userId) => {
         try {
-            const res = await api.get(`/projects/member/progress/${userId}`);
+            const res = await api.get(`/api/projects/member/progress/${userId}`);
             setProgressData(res.data);
         } catch (err) {
             console.error('Error fetching progress data:', err);

@@ -28,7 +28,7 @@ const MemberTasks = () => {
         // Fetch all resources that exist for mapping
         const loadResources = async () => {
             try {
-                const res = await api.get('/projects/resources/all');
+                const res = await api.get('/api/projects/resources/all');
                 setAllResources(res.data || []);
             } catch (err) {
                 console.error("Failed to load resources catalog:", err);
@@ -39,7 +39,7 @@ const MemberTasks = () => {
 
     const fetchTasks = async (userId) => {
         try {
-            const res = await api.get(`/projects/member/dashboard/${userId}`);
+            const res = await api.get(`/api/projects/member/dashboard/${userId}`);
             setTasks(res.data.tasks || []);
 
             // Calculate stats from response
@@ -68,7 +68,7 @@ const MemberTasks = () => {
             let newStatus = task.status;
             if (newProgress > 0 && task.status === 'Todo') newStatus = 'In Progress';
 
-            await api.put(`/projects/tasks/${taskId}/progress`, {
+            await api.put(`/api/projects/tasks/${taskId}/progress`, {
                 progress: newProgress,
                 status: newStatus
             });
@@ -98,7 +98,7 @@ const MemberTasks = () => {
         }
 
         try {
-            await api.post(`/projects/tasks/${task.task_id}/resource-usage`, {
+            await api.post(`/api/projects/tasks/${task.task_id}/resource-usage`, {
                 projectId: task.project_id,
                 resourceId: usage.resourceId,
                 quantity: usage.used
@@ -120,7 +120,7 @@ const MemberTasks = () => {
     const handleMarkComplete = async (taskId) => {
         try {
             setUpdatingTaskId(taskId);
-            await api.put(`/projects/tasks/${taskId}/progress`, {
+            await api.put(`/api/projects/tasks/${taskId}/progress`, {
                 progress: 100,
                 status: 'Pending Review'
             });

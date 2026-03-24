@@ -56,7 +56,7 @@ const Projects = () => {
         try {
             // Fetch Projects
             try {
-                const projectsRes = await api.get('/projects');
+                const projectsRes = await api.get('/api/projects');
                 setProjects(projectsRes.data);
             } catch (err) {
                 console.error("Failed to fetch projects:", err);
@@ -101,7 +101,7 @@ const Projects = () => {
                 toast.error("Please fill all required fields");
                 return;
             }
-            await api.post('/projects', formData);
+            await api.post('/api/projects', formData);
             fetchData(); // Refresh list
             handleClose();
         } catch (error) {

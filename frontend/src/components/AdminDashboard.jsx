@@ -25,8 +25,8 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       const usersRes = await api.get("/users");
-      const projectsRes = await api.get("/projects");
-      const tasksRes = await api.get("/projects/tasks/all");
+      const projectsRes = await api.get("/api/projects");
+      const tasksRes = await api.get("/api/projects/tasks/all");
       setUsers(usersRes.data || []);
       setProjects(projectsRes.data || []);
       setTasks(tasksRes.data || []);

@@ -32,7 +32,7 @@ const ManagerCostTracking = () => {
     useEffect(() => {
         const fetch = async () => {
             try {
-                const res = await api.get(`/projects/${projectId}/cost-tracking`);
+                const res = await api.get(`/api/projects/${projectId}/cost-tracking`);
                 setTotals(res.data.totals || { budgeted: 0, spent: 0, remaining: 0 });
                 setByResource(res.data.byResource || []);
                 setByMember(res.data.byMember || []);

@@ -50,10 +50,10 @@ const ProjectTasks = () => {
             try {
                 // Handle Members — fetch all from users table directly
                 const [taskRes, memberRes, resourceRes, allMemberRes] = await Promise.all([
-                    api.get(`/projects/${projectId}/tasks`).catch(err => { console.error("Tasks fetch failed", err); return { data: [] }; }),
-                    api.get(`/projects/${projectId}/members`).catch(err => { console.error("Members fetch failed", err); return { data: [] }; }),
-                    api.get('/projects/resources/all').catch(err => { console.error("Resources fetch failed", err); return { data: [] }; }),
-                    api.get('/projects/team-members/all').catch(err => { console.error("All members fetch failed", err); return { data: [] }; })
+                    api.get(`/api/projects/${projectId}/tasks`).catch(err => { console.error("Tasks fetch failed", err); return { data: [] }; }),
+                    api.get(`/api/projects/${projectId}/members`).catch(err => { console.error("Members fetch failed", err); return { data: [] }; }),
+                    api.get('/api/projects/resources/all').catch(err => { console.error("Resources fetch failed", err); return { data: [] }; }),
+                    api.get('/api/projects/team-members/all').catch(err => { console.error("All members fetch failed", err); return { data: [] }; })
                 ]);
 
                 setTasks(taskRes.data || []);
@@ -91,7 +91,7 @@ const ProjectTasks = () => {
     const handleAddTask = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/projects/tasks', {
+            await api.post('/api/projects/tasks', {
                 project_id: projectId,
                 ...formData
             });
@@ -107,7 +107,7 @@ const ProjectTasks = () => {
                 resources: []
             });
             // Refresh tasks
-            const taskRes = await api.get(`/projects/${projectId}/tasks`);
+            const taskRes = await api.get(`/api/projects/${projectId}/tasks`);
             setTasks(taskRes.data || []);
             navigate('/manager/projects');
         } catch (err) {
@@ -288,7 +288,7 @@ const ProjectTasks = () => {
                                                 className="review-btn"
                                                 onClick={async () => {
                                                     try {
-                                                        await api.put(`/projects/tasks/${task.task_id}/review`);
+                                                        await api.put(`/api/projects/tasks/${task.task_id}/review`);
                                                         setTasks(prev => prev.map(t =>
                                                             t.task_id === task.task_id ? { ...t, status: 'Reviewed' } : t
                                                         ));

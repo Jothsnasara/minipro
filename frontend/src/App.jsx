@@ -24,6 +24,7 @@ import MemberTasks from "./components/MemberTasks";
 import ProjectForm from "./components/ProjectForm";
 import ProjectTasks from "./components/ProjectTasks";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ManagerReports from "./components/ManagerReports";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
         <Route path="projects/:projectId/cost-tracking" element={<ManagerCostTracking />} />
         <Route path="register" element={<Register />} /> {/* /admin/register */}
         <Route path="notifications" element={<Notifications />} /> {/* /admin/notifications */}
+        <Route path="reports" element={<ManagerReports />} /> {/* /admin/reports */}
       </Route>
 
       {/* Manager routes */}
@@ -69,6 +71,7 @@ function App() {
         <Route path="/manager/projects/:projectId/cost-tracking" element={<ManagerCostTracking />} />
         <Route path="/manager/progress" element={<ManagerProgress />} />
         <Route path="/manager/notifications" element={<Notifications />} />
+        <Route path="/reports" element={<ManagerReports />} />
       </Route>
 
       {/* Member routes */}

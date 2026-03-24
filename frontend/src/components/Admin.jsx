@@ -25,9 +25,7 @@ const Admin = () => {
 
   const handleNavigate = (item) => {
     setActiveItem(item.path);
-    if (item.text !== "Reports & Analytics") {
-      navigate(item.path);
-    }
+    navigate(item.path);
   };
 
   return (
